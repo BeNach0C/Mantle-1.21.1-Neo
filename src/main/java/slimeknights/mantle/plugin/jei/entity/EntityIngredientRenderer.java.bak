@@ -17,6 +17,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import slimeknights.mantle.Mantle;
 import slimeknights.mantle.data.loadable.Loadables;
 import slimeknights.mantle.recipe.ingredient.EntityIngredient;
@@ -45,18 +47,15 @@ public class EntityIngredientRenderer implements IIngredientRenderer<EntityIngre
   /** Cache of entities for each entity type */
   private final Map<EntityType<?>,Entity> ENTITY_MAP = new HashMap<>();
 
-  @Override
-  public int getWidth() {
+  public int getWidth(EntityIngredient.EntityInput input) {
     return size;
   }
 
-  @Override
-  public int getHeight() {
+  public int getHeight(EntityIngredient.EntityInput input) {
     return size;
   }
 
-  @Override
-  public void render(GuiGraphics graphics, @Nullable EntityIngredient.EntityInput input) {
+  public void render(GuiGraphics graphics, EntityIngredient.EntityInput input) {
     if (input != null) {
       Level world = Minecraft.getInstance().level;
       EntityType<?> type = input.type();
@@ -81,7 +80,7 @@ public class EntityIngredientRenderer implements IIngredientRenderer<EntityIngre
           }
           // catch exceptions drawing the entity to be safe, any caught exceptions blacklist the entity
           try {
-            InventoryScreen.renderEntityInInventoryFollowsMouse(graphics, size / 2, size, scale, 0, 10, livingEntity);
+            InventoryScreen.renderEntityInInventory(graphics, (float)(size / 2), (float)size, (float)scale, new Vector3f(0, 0, 0), new Quaternionf().rotationXYZ(0, 0, 0), null, livingEntity);
             return;
           } catch (Exception e) {
             Mantle.logger.error("Error drawing entity " + BuiltInRegistries.ENTITY_TYPE.getKey(type), e);
@@ -104,8 +103,7 @@ public class EntityIngredientRenderer implements IIngredientRenderer<EntityIngre
   }
 
   @SuppressWarnings("removal")
-  @Override
-  public List<Component> getTooltip(EntityIngredient.EntityInput ingredient, TooltipFlag flag) {
+  public List<Component> getTooltip(EntityIngredient.EntityInput ingredient, net.minecraft.world.item.Item.TooltipContext context, @Nullable net.minecraft.world.entity.player.Player player, TooltipFlag flag) {
     EntityType<?> type = ingredient.type();
     List<Component> tooltip = new ArrayList<>();
     tooltip.add(type.getDescription());
@@ -115,9 +113,12 @@ public class EntityIngredientRenderer implements IIngredientRenderer<EntityIngre
     return tooltip;
   }
 
+  public List<Component> getTooltip(EntityIngredient.EntityInput ingredient, TooltipFlag flag) {
+    return getTooltip(ingredient, net.minecraft.world.item.Item.TooltipContext.EMPTY, null, flag);
+  }
+
   @SuppressWarnings("removal")
-  @Override
-  public void getTooltip(ITooltipBuilder tooltip, EntityInput ingredient, TooltipFlag flag) {
+  public void getTooltip(ITooltipBuilder tooltip, EntityInput ingredient, net.minecraft.world.item.Item.TooltipContext context, @Nullable net.minecraft.world.entity.player.Player player, TooltipFlag flag) {
     EntityType<?> type = ingredient.type();
     tooltip.add(type.getDescription());
     if (flag.isAdvanced()) {

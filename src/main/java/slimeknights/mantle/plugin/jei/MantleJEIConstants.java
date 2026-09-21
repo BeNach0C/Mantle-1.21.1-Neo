@@ -1,12 +1,16 @@
 package slimeknights.mantle.plugin.jei;
 
 import mezz.jei.api.gui.ingredient.ICraftingGridHelper;
-import mezz.jei.api.ingredients.IIngredientType;
-import slimeknights.mantle.recipe.ingredient.EntityIngredient.EntityInput;
+import net.minecraft.resources.ResourceLocation;
 
 public class MantleJEIConstants {
   /** Ingredient for an entity */
-  public static final IIngredientType<EntityInput> ENTITY_TYPE = () -> EntityInput.class;
+  // public static final IIngredientType<EntityInput> ENTITY_TYPE = new IIngredientType<EntityInput>() {
+  //   @Override
+  //   public Class<? extends EntityInput> getIngredientClass() {
+  //     return EntityInput.class;
+  //   }
+  // };
 
   /** Borrowed from {@link ICraftingGridHelper} implementation {@code CraftingGridHelper}. Ideally I'd call it from the API, but the API lacks all the information I need for that. */
   public static int getCraftingIndex(int i, int width, int height) {

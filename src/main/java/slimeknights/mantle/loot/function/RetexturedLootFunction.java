@@ -1,8 +1,9 @@
 package slimeknights.mantle.loot.function;
 
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonObject;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.world.item.ItemStack;
+import java.util.List;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.functions.LootItemConditionalFunction;
@@ -22,19 +23,21 @@ import java.util.Set;
  */
 @SuppressWarnings("WeakerAccess")
 public class RetexturedLootFunction extends LootItemConditionalFunction {
-  public static final Serializer SERIALIZER = new Serializer();
+  public static final MapCodec<RetexturedLootFunction> CODEC = RecordCodecBuilder.mapCodec(inst ->
+      commonFields(inst).apply(inst, RetexturedLootFunction::new)
+  );
 
   /**
    * Creates a new instance from the given conditions
    * @param conditions Conditions list
    */
-  public RetexturedLootFunction(LootItemCondition[] conditions) {
+  public RetexturedLootFunction(List<LootItemCondition> conditions) {
     super(conditions);
   }
 
   /** Creates a new instance with no conditions */
   public RetexturedLootFunction() {
-    super(new LootItemCondition[0]);
+    super(List.of());
   }
 
   @Override
@@ -55,14 +58,7 @@ public class RetexturedLootFunction extends LootItemConditionalFunction {
   }
 
   @Override
-  public LootItemFunctionType getType() {
+  public LootItemFunctionType<RetexturedLootFunction> getType() {
     return MantleLoot.RETEXTURED_FUNCTION;
-  }
-
-  private static class Serializer extends LootItemConditionalFunction.Serializer<RetexturedLootFunction> {
-    @Override
-    public RetexturedLootFunction deserialize(JsonObject json, JsonDeserializationContext ctx, LootItemCondition[] conditions) {
-      return new RetexturedLootFunction(conditions);
-    }
   }
 }

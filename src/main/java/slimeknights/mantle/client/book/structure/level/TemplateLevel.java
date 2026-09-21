@@ -47,7 +47,7 @@ public class TemplateLevel extends Level {
 
   private final Map<String, MapItemSavedData> maps = new HashMap<>();
   private final Scoreboard scoreboard = new Scoreboard();
-  private final RecipeManager recipeManager = new RecipeManager();
+  private final RecipeManager recipeManager = new RecipeManager(net.minecraft.core.RegistryAccess.EMPTY);
   private final TemplateChunkSource chunkSource;
 
   public TemplateLevel(List<StructureBlockInfo> blocks, Predicate<BlockPos> shouldShow) {
@@ -81,19 +81,16 @@ public class TemplateLevel extends Level {
   }
 
   @Nullable
-  @Override
-  public MapItemSavedData getMapData(@Nonnull String mapName) {
-    return this.maps.get(mapName);
+  public MapItemSavedData getMapData(net.minecraft.world.level.saveddata.maps.MapId mapId) {
+    return null;
+  }
+
+  public void setMapData(net.minecraft.world.level.saveddata.maps.MapId mapId, MapItemSavedData mapDataIn) {
   }
 
   @Override
-  public void setMapData(String mapId, MapItemSavedData mapDataIn) {
-    this.maps.put(mapId, mapDataIn);
-  }
-
-  @Override
-  public int getFreeMapId() {
-    return this.maps.size();
+  public net.minecraft.world.level.saveddata.maps.MapId getFreeMapId() {
+    return new net.minecraft.world.level.saveddata.maps.MapId(this.maps.size());
   }
 
   @Override
@@ -137,13 +134,30 @@ public class TemplateLevel extends Level {
   @Override
   public void levelEvent(@Nullable Player player, int type, @Nonnull BlockPos pos, int data) {}
 
-  @Override
-  public void gameEvent(GameEvent pEvent, Vec3 pPosition, Context pContext) {}
+  public void gameEvent(net.minecraft.core.Holder<GameEvent> pEvent, Vec3 pPosition, Context pContext) {}
 
   @Override
   public FeatureFlagSet enabledFeatures() {
     return FeatureFlagSet.of();
   }
+
+  @Override
+  public void setDayTimePerTick(float v) {}
+
+  @Override
+  public void setDayTimeFraction(float f) {}
+
+  @Override
+  public float getDayTimeFraction() { return 0.0f; }
+
+  @Override
+  public net.minecraft.world.TickRateManager tickRateManager() { return new net.minecraft.world.TickRateManager(); }
+
+  @Override
+  public net.minecraft.world.item.alchemy.PotionBrewing potionBrewing() { return net.minecraft.world.item.alchemy.PotionBrewing.EMPTY; }
+
+  @Override
+  public float getDayTimePerTick() { return 1.0f; }
 
   @Override
   public float getShade(@Nonnull Direction p_230487_1_, boolean p_230487_2_) {

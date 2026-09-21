@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.ForgeI18n;
+import net.minecraft.locale.Language;
 
 import javax.annotation.Nullable;
 import java.text.DecimalFormat;
@@ -28,7 +28,7 @@ public class TranslationHelper {
    * @return  True if its translatable
    */
   public static boolean canTranslate(String key) {
-    return !key.equals(ForgeI18n.getPattern(key));
+    return Language.getInstance().has(key);
   }
 
   /**
@@ -51,13 +51,13 @@ public class TranslationHelper {
   }
 
   /**
-   * Adds localized tooltip to a list of tooltips if present
-   * @param key      Translation key
+   * Adds all lines from the translated string to the tooltip.
+   * @param key      Key to translate
    * @param tooltip  List of tooltips
    */
   public static void addOptionalTooltip(String key, List<Component> tooltip) {
-    String translated = ForgeI18n.getPattern(key);
-    if (canTranslate(key, translated)) {
+    if (Language.getInstance().has(key)) {
+      String translated = Language.getInstance().getOrDefault(key, key);
       addEachLine(translated, tooltip);
     }
   }
@@ -86,3 +86,4 @@ public class TranslationHelper {
     return line;
   }
 }
+

@@ -3,8 +3,8 @@ package slimeknights.mantle.client.model.builder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.core.Direction;
-import net.minecraftforge.client.model.generators.ModelBuilder;
-import net.minecraftforge.common.data.ExistingFileHelper;
+import net.neoforged.neoforge.client.model.generators.ModelBuilder;
+import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import slimeknights.mantle.Mantle;
 
 import java.util.EnumSet;
@@ -17,7 +17,7 @@ public class ConnectedModelBuilder<T extends ModelBuilder<T>> extends ColoredMod
   private String predicate = null;
 
   public ConnectedModelBuilder(T parent, ExistingFileHelper existingFileHelper) {
-    super(Mantle.getResource("connected"), parent, existingFileHelper);
+    super(Mantle.getResource("connected"), parent, existingFileHelper, false);
   }
 
   /**

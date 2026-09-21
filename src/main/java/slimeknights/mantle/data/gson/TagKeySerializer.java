@@ -16,9 +16,12 @@ import slimeknights.mantle.util.JsonHelper;
 import java.lang.reflect.Type;
 
 /** Serializer for a generic tag key type. */
-@RequiredArgsConstructor
 public class TagKeySerializer<T> implements JsonSerializer<TagKey<T>>, JsonDeserializer<TagKey<T>> {
   private final ResourceKey<Registry<T>> registry;
+
+  public TagKeySerializer(ResourceKey<Registry<T>> registry) {
+    this.registry = registry;
+  }
 
   @Override
   public TagKey<T> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {

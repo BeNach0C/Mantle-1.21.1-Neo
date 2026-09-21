@@ -29,6 +29,22 @@ public abstract class ModuleScreen<P extends MultiModuleScreen<?>, C extends Abs
     this.bottom = bottom;
   }
 
+  public int guiLeft() {
+    return this.leftPos;
+  }
+
+  public int guiTop() {
+    return this.topPos;
+  }
+
+  public int guiWidth() {
+    return this.imageWidth;
+  }
+
+  public int guiHeight() {
+    return this.imageHeight;
+  }
+
   public int guiRight() {
     return this.leftPos + this.imageWidth;
   }
@@ -135,7 +151,7 @@ public abstract class ModuleScreen<P extends MultiModuleScreen<?>, C extends Abs
    *
    * @return True to prevent the main container handling the mouseclick
    */
-  public boolean handleMouseScrolled(double mouseX, double mouseY, double delta) {
+  public boolean handleMouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
     return false;
   }
 }

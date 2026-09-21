@@ -5,7 +5,8 @@ import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.commands.synchronization.SingletonArgumentInfo;
 import net.minecraft.core.registries.Registries;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import slimeknights.mantle.registration.RegistrationHelper;
 
 import java.util.function.Supplier;
@@ -14,7 +15,7 @@ import java.util.function.Supplier;
 @SuppressWarnings("UnusedReturnValue")
 public class ArgumentTypeDeferredRegister extends DeferredRegisterWrapper<ArgumentTypeInfo<?,?>> {
   public ArgumentTypeDeferredRegister(String modID) {
-    super(Registries.COMMAND_ARGUMENT_TYPE, modID);
+    super(DeferredRegister.create(Registries.COMMAND_ARGUMENT_TYPE, modID), modID);
   }
 
   /**
@@ -27,7 +28,7 @@ public class ArgumentTypeDeferredRegister extends DeferredRegisterWrapper<Argume
    * @param <I>  Argument info type
    * @return  Registry object
    */
-  public <A extends ArgumentType<?>,T extends ArgumentTypeInfo.Template<A>,I extends ArgumentTypeInfo<A,T>> RegistryObject<I> register(String name, Class<? super A> argumentClass, Supplier<I> supplier) {
+  public <A extends ArgumentType<?>,T extends ArgumentTypeInfo.Template<A>,I extends ArgumentTypeInfo<A,T>> DeferredHolder<ArgumentTypeInfo<?,?>, I> register(String name, Class<? super A> argumentClass, Supplier<I> supplier) {
     return register.register(name, () -> {
       I info = supplier.get();
       ArgumentTypeInfos.registerByClass(RegistrationHelper.genericArgumentType(argumentClass), info);
@@ -43,7 +44,7 @@ public class ArgumentTypeDeferredRegister extends DeferredRegisterWrapper<Argume
    * @param <A>  Argument type
    * @return  Registry object
    */
-  public <A extends ArgumentType<?>> RegistryObject<SingletonArgumentInfo<A>> registerSingleton(String name, Class<A> argumentClass, Supplier<A> supplier) {
+  public <A extends ArgumentType<?>> DeferredHolder<ArgumentTypeInfo<?,?>, SingletonArgumentInfo<A>> registerSingleton(String name, Class<A> argumentClass, Supplier<A> supplier) {
     return register(name, argumentClass, () -> SingletonArgumentInfo.contextFree(supplier));
   }
 }

@@ -14,12 +14,12 @@ import net.minecraft.world.level.material.FlowingFluid;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fluids.FluidType;
-import net.minecraftforge.fluids.ForgeFlowingFluid;
-import net.minecraftforge.fluids.ForgeFlowingFluid.Properties;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.fluids.BaseFlowingFluid;
+import net.neoforged.neoforge.fluids.BaseFlowingFluid.Properties;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
+import net.neoforged.neoforge.registries.DeferredHolder;
 import slimeknights.mantle.block.fluid.BurningLiquidBlock;
 import slimeknights.mantle.block.fluid.MobEffectLiquidBlock;
 import slimeknights.mantle.fluid.InvertedFluid;
@@ -46,10 +46,10 @@ public class FluidDeferredRegister extends DeferredRegisterWrapper<Fluid> {
   private final SynchronizedDeferredRegister<Item> itemRegister;
 
   public FluidDeferredRegister(String modID) {
-    super(Registries.FLUID, modID);
-    this.fluidTypeRegister = SynchronizedDeferredRegister.create(ForgeRegistries.Keys.FLUID_TYPES, modID);
-    this.blockRegister = SynchronizedDeferredRegister.create(Registries.BLOCK, modID);
-    this.itemRegister = SynchronizedDeferredRegister.create(Registries.ITEM, modID);
+    super(net.neoforged.neoforge.registries.DeferredRegister.create(net.minecraft.core.registries.Registries.FLUID, modID), modID);
+    this.fluidTypeRegister = SynchronizedDeferredRegister.create(net.neoforged.neoforge.registries.DeferredRegister.create(net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.FLUID_TYPES, modID));
+    this.blockRegister = SynchronizedDeferredRegister.create(net.neoforged.neoforge.registries.DeferredRegister.create(net.minecraft.core.registries.Registries.BLOCK, modID));
+    this.itemRegister = SynchronizedDeferredRegister.create(net.neoforged.neoforge.registries.DeferredRegister.create(net.minecraft.core.registries.Registries.ITEM, modID));
   }
 
   @Override
@@ -67,7 +67,7 @@ public class FluidDeferredRegister extends DeferredRegisterWrapper<Fluid> {
    * @param <I>   Fluid type
    * @return  Fluid to supply
    */
-  public <I extends FluidType> RegistryObject<I> registerType(String name, Supplier<? extends I> sup) {
+  public <I extends FluidType> DeferredHolder<FluidType, I> registerType(String name, Supplier<? extends I> sup) {
     return fluidTypeRegister.register(name, sup);
   }
 
@@ -78,7 +78,7 @@ public class FluidDeferredRegister extends DeferredRegisterWrapper<Fluid> {
    * @param <I>   Fluid type
    * @return  Fluid to supply
    */
-  public <I extends Fluid> RegistryObject<I> registerFluid(String name, Supplier<? extends I> sup) {
+  public <I extends Fluid> DeferredHolder<Fluid, I> registerFluid(String name, Supplier<? extends I> sup) {
     return register.register(name, sup);
   }
 
@@ -102,7 +102,8 @@ public class FluidDeferredRegister extends DeferredRegisterWrapper<Fluid> {
 
     /** Adds a common tag to the builder */
     public Builder commonTag() {
-      return this.commonTag(name);
+      this.commonTag = name;
+      return this;
     }
 
     /* Fluid type */
@@ -149,7 +150,7 @@ public class FluidDeferredRegister extends DeferredRegisterWrapper<Fluid> {
 
     /** Creates the default bucket */
     public Builder bucket() {
-      return bucket(itemRegister.register(name + "_bucket", () -> new BucketItem(stillDelayed, RegistrationHelper.BUCKET_PROPS)));
+      return bucket(itemRegister.register(name + "_bucket", () -> new BucketItem(stillDelayed.get(), RegistrationHelper.BUCKET_PROPS)));
     }
 
 
@@ -166,7 +167,7 @@ public class FluidDeferredRegister extends DeferredRegisterWrapper<Fluid> {
 
     /** Creates the default block from the given material and light level */
     public Builder block(MapColor color, int lightLevel) {
-      return block(sup -> new LiquidBlock(sup, createProperties(color, lightLevel)));
+      return block(sup -> new LiquidBlock(sup.get(), createProperties(color, lightLevel)));
     }
 
     /** Creates a block that lights entities on fire and damages them over time */
@@ -200,14 +201,14 @@ public class FluidDeferredRegister extends DeferredRegisterWrapper<Fluid> {
       if (type == null) {
         this.type();
       }
-      RegistryObject<F> fluid = registerFluid(name, () -> constructor.apply(this));
-      stillDelayed.setSupplier(fluid);
+      DeferredHolder<Fluid, F> fluid = registerFluid(name, () -> constructor.apply(this));
+      stillDelayed.setSupplier(() -> fluid.get());
       return new FluidObject<>(resource(name), commonTag, type, fluid);
     }
 
     /** Builds a flowing fluid with the default constructors */
-    public FlowingFluidObject<ForgeFlowingFluid> flowing() {
-      return flowing(ForgeFlowingFluid.Source::new, ForgeFlowingFluid.Flowing::new);
+    public FlowingFluidObject<BaseFlowingFluid> flowing() {
+      return flowing(BaseFlowingFluid.Source::new, BaseFlowingFluid.Flowing::new);
     }
 
     /** Builds a flowing fluid with the default constructors */
@@ -233,9 +234,9 @@ public class FluidDeferredRegister extends DeferredRegisterWrapper<Fluid> {
 
       // create fluids now that we have props
       Supplier<F> still = registerFluid(name, () -> createStill.apply(props));
-      stillDelayed.setSupplier(still);
+      stillDelayed.setSupplier(() -> still.get());
       Supplier<F> flowing = registerFluid("flowing_" + name, () -> createFlowing.apply(props));
-      flowingDelayed.setSupplier(flowing);
+      flowingDelayed.setSupplier(() -> flowing.get());
 
       // return the final nice object
       return new FlowingFluidObject<>(resource(name), commonTag, type, still, flowing, this.block);

@@ -3,10 +3,7 @@ package slimeknights.mantle.fluid.texture;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.PackOutput.Target;
-import net.minecraftforge.fluids.FluidType;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.IForgeRegistry;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.neoforge.fluids.FluidType;
 import slimeknights.mantle.data.GenericDataProvider;
 import slimeknights.mantle.registration.object.FluidObject;
 import slimeknights.mantle.util.JsonHelper;
@@ -38,11 +35,11 @@ public abstract class AbstractFluidTextureProvider extends GenericDataProvider {
   @Override
   public final CompletableFuture<?> run(CachedOutput cache) {
     ensureTexturesAdded();
-    IForgeRegistry<FluidType> fluidTypeRegistry = ForgeRegistries.FLUID_TYPES.get();
+    net.minecraft.core.Registry<FluidType> fluidTypeRegistry = net.neoforged.neoforge.registries.NeoForgeRegistries.FLUID_TYPES;
 
     // ensure we added textures for all our fluid types
     if (modId != null) {
-      List<String> missing = fluidTypeRegistry.getEntries().stream().filter(entry -> entry.getKey().location().getNamespace().equals(modId) && !allTextures.containsKey(entry.getValue()) && !ignore.contains(entry.getValue())).map(e -> e.getKey().location().toString()).toList();
+      List<String> missing = fluidTypeRegistry.entrySet().stream().filter(entry -> entry.getKey().location().getNamespace().equals(modId) && !allTextures.containsKey(entry.getValue()) && !ignore.contains(entry.getValue())).map(e -> e.getKey().location().toString()).toList();
       if (!missing.isEmpty()) {
         throw new IllegalStateException("Missing fluid textures for: " + String.join(", ", missing));
       }
@@ -77,10 +74,10 @@ public abstract class AbstractFluidTextureProvider extends GenericDataProvider {
     return texture(fluid.getType());
   }
 
-  /** Create a new builder for the give fluid type */
-  public FluidTexture.Builder texture(RegistryObject<? extends FluidType> fluid) {
-    return texture(fluid.get());
-  }
+  // /** Create a new builder for the give fluid type */
+  // public FluidTexture.Builder texture(RegistryObject<? extends FluidType> fluid) {
+  //   return texture(fluid.get());
+  // }
 
   /** Marks the given fluid type to be ignored by this texture provider */
   public void skip(FluidType fluid) {
@@ -92,8 +89,9 @@ public abstract class AbstractFluidTextureProvider extends GenericDataProvider {
     skip(fluid.getType());
   }
 
-  /** Marks the given fluid type to be ignored by this texture provider */
-  public void skip(RegistryObject<? extends FluidType> fluid) {
-    skip(fluid.get());
-  }
+  // /** Marks the given fluid type to be ignored by this texture provider */
+  // public void skip(RegistryObject<? extends FluidType> fluid) {
+  //   skip(fluid.get());
+  // }
 }
+

@@ -15,7 +15,7 @@ public class ValidZeroDataSlot extends DataSlot {
   private final int idx;
 
   public ValidZeroDataSlot(ContainerData data, int idx) {
-    this.prevValue = Integer.MIN_VALUE;
+    // this.prevValue = Integer.MIN_VALUE;
     this.data = data;
     this.idx = idx;
   }

@@ -28,10 +28,10 @@ public abstract class NameableBlockEntity extends MantleBlockEntity implements I
 	}
 
 	@Override
-	public void load(CompoundTag tags) {
-		super.load(tags);
+	protected void loadAdditional(CompoundTag tags, net.minecraft.core.HolderLookup.Provider provider) {
+		super.loadAdditional(tags, provider);
 		if (tags.contains(TAG_CUSTOM_NAME, Tag.TAG_STRING)) {
-			this.customName = Component.Serializer.fromJson(tags.getString(TAG_CUSTOM_NAME));
+			this.customName = Component.Serializer.fromJson(tags.getString(TAG_CUSTOM_NAME), this.level != null ? this.level.registryAccess() : net.minecraft.core.RegistryAccess.EMPTY);
 		}
 	}
 
@@ -39,7 +39,7 @@ public abstract class NameableBlockEntity extends MantleBlockEntity implements I
 	public void saveSynced(CompoundTag tags) {
 		super.saveSynced(tags);
 		if (this.hasCustomName()) {
-			tags.putString(TAG_CUSTOM_NAME, Component.Serializer.toJson(this.customName));
+			tags.putString(TAG_CUSTOM_NAME, Component.Serializer.toJson(this.customName, this.level != null ? this.level.registryAccess() : net.minecraft.core.RegistryAccess.EMPTY));
 		}
 	}
 }

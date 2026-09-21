@@ -5,3 +5,4 @@ package slimeknights.mantle.registration.adapter;
 import net.minecraft.MethodsReturnNonnullByDefault;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+

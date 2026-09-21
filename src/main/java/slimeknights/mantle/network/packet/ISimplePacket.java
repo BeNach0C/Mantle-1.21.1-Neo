@@ -1,23 +1,21 @@
 package slimeknights.mantle.network.packet;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
-
-import java.util.function.Supplier;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
  * Packet interface to add common methods for registration
  */
-public interface ISimplePacket {
+public interface ISimplePacket extends CustomPacketPayload {
   /**
    * Encodes a packet for the buffer
    * @param buf  Buffer instance
    */
-  void encode(FriendlyByteBuf buf);
+  void encode(net.minecraft.network.RegistryFriendlyByteBuf buf);
 
   /**
    * Handles receiving the packet
    * @param context  Packet context
    */
-  void handle(Supplier<NetworkEvent.Context> context);
+  void handle(IPayloadContext context);
 }

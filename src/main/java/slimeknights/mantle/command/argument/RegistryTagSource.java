@@ -21,7 +21,7 @@ public record RegistryTagSource<T>(Registry<T> registry) implements TagSource<T>
 
   @Override
   public String folder() {
-    return TagManager.getTagDir(key());
+    return "tags/" + key().location().getPath();
   }
 
   /* Tags */
@@ -75,7 +75,7 @@ public record RegistryTagSource<T>(Registry<T> registry) implements TagSource<T>
 
   @Override
   public Stream<TagKey<T>> tagsFor(T value) {
-    return registry.getHolder(registry.getId(value)).stream().flatMap(Holder::getTagKeys);
+    return registry.getHolder(registry.getId(value)).stream().flatMap(net.minecraft.core.Holder::tags);
   }
 
   @Override

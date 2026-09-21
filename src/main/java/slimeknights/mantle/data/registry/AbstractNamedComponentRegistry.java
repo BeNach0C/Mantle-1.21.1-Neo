@@ -81,19 +81,18 @@ public abstract class AbstractNamedComponentRegistry<T> implements ResourceLocat
   /** Parse the value from JSON */
   @Nullable
   public T decodeOptional(FriendlyByteBuf buffer) {
-    // empty string is not a valid resource location, so its a nice value to use for null, saves us a byte
     String key = buffer.readUtf(Short.MAX_VALUE);
     if (key.isEmpty()) {
       return null;
     }
-    return decodeInternal(new ResourceLocation(key));
+    return decodeInternal(ResourceLocation.parse(key));
   }
 
 
   /* Fields */
 
   @Override
-  public <P> LoadableField<T,P> nullableField(String key, Function<P,T> getter) {
+  public <P> LoadableField<T, P> nullableField(String key, Function<P,T> getter) {
     return new NullableField<>(this, key, getter);
   }
 

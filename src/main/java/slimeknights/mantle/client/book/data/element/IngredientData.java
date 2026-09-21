@@ -17,7 +17,6 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.core.NonNullList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.StringUtil;
-import net.minecraftforge.registries.ForgeRegistries;
 import slimeknights.mantle.client.book.repository.BookRepository;
 import slimeknights.mantle.recipe.ingredient.SizedIngredient;
 
@@ -82,14 +81,15 @@ public class IngredientData implements IDataElement {
   private ItemStack getMissingItem(String error) {
     ItemStack missingItem = new ItemStack(Items.BARRIER);
 
-    CompoundTag display = missingItem.getOrCreateTagElement("display");
-    display.putString("Name", "\u00A7rError Loading Item");
-    ListTag lore = new ListTag();
+    missingItem.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, net.minecraft.network.chat.Component.literal("Missing Item"));
     if(!StringUtil.isNullOrEmpty(error)) {
-      lore.add(StringTag.valueOf("\u00A7r\u00A7eError:"));
-      lore.add(StringTag.valueOf("\u00A7r\u00A7e" + error));
+      missingItem.set(net.minecraft.core.component.DataComponents.LORE, new net.minecraft.world.item.component.ItemLore(
+          java.util.List.of(
+              net.minecraft.network.chat.Component.literal("\u00A7r\u00A7eError:"),
+              net.minecraft.network.chat.Component.literal("\u00A7r\u00A7e" + error)
+          )
+      ));
     }
-    display.put("Lore", lore);
 
     return missingItem;
   }
@@ -142,7 +142,7 @@ public class IngredientData implements IDataElement {
         JsonPrimitive primitive = json.getAsJsonPrimitive();
 
         if(primitive.isString()) {
-          Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(primitive.getAsString()));
+          Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(ResourceLocation.parse(primitive.getAsString()));
           return SizedIngredient.fromItems(item);
         }
       }

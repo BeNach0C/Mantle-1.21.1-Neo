@@ -4,8 +4,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 import slimeknights.mantle.block.entity.MantleBlockEntity;
 
 import javax.annotation.Nonnull;
@@ -42,23 +42,18 @@ public abstract class SingleItemHandler<T extends MantleBlockEntity> implements 
 
   /* Properties */
 
-  @Override
   public boolean isItemValid(int slot, ItemStack stack) {
     return slot == 0 && isItemValid(stack);
   }
 
-  @Override
   public int getSlots() {
     return 1;
   }
 
-  @Override
   public int getSlotLimit(int slot) {
     return maxStackSize;
   }
 
-  @Nonnull
-  @Override
   public ItemStack getStackInSlot(int slot) {
     if (slot == 0) {
       return stack;
@@ -69,31 +64,28 @@ public abstract class SingleItemHandler<T extends MantleBlockEntity> implements 
 
   /* Interaction */
 
-  @Override
   public void setStackInSlot(int slot, ItemStack stack) {
     if (slot == 0) {
       setStack(stack);
     }
   }
   
-  @Nonnull
-  @Override
   public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
     if (stack.isEmpty()) {
       return ItemStack.EMPTY;
     }
     if (slot == 0) {
-      ItemStack current = getStack();
+      ItemStack current = this.stack;
       if (current.isEmpty()) {
         if (this.isItemValid(slot, stack)) {
           // insert up to the stack limit
           int size = Math.min(stack.getCount(), getSlotLimit(0));
           if (!simulate) {
-            this.setStack(ItemHandlerHelper.copyStackWithSize(stack, size));
+            this.setStack(stack.copyWithCount(size));
           }
-          return ItemHandlerHelper.copyStackWithSize(stack, stack.getCount() - size);
+          return stack.copyWithCount(stack.getCount() - size);
         }
-      } else if (ItemHandlerHelper.canItemStacksStack(current, stack)) {
+      } else if (ItemStack.isSameItemSameComponents(current, stack)) {
         // increase up to the stack limit
         int added = Math.min(stack.getCount(), getSlotLimit(0) - current.getCount());
         if (added > 0) {
@@ -101,15 +93,13 @@ public abstract class SingleItemHandler<T extends MantleBlockEntity> implements 
             current.grow(added);
             setStack(current);
           }
-          return ItemHandlerHelper.copyStackWithSize(stack, stack.getCount() - added);
+          return stack.copyWithCount(stack.getCount() - added);
         }
       }
     }
     return stack;
   }
 
-  @Nonnull
-  @Override
   public ItemStack extractItem(int slot, int amount, boolean simulate) {
     if (amount == 0 || slot != 0) {
       return ItemStack.EMPTY;
@@ -120,9 +110,9 @@ public abstract class SingleItemHandler<T extends MantleBlockEntity> implements 
 
     // if amount is less than our size, need to do some shrinking
     if (amount < stack.getCount()) {
-      ItemStack result = ItemHandlerHelper.copyStackWithSize(stack, amount);
+      ItemStack result = stack.copyWithCount(amount);
       if (!simulate) {
-        setStack(ItemHandlerHelper.copyStackWithSize(stack, stack.getCount() - amount));
+        setStack(stack.copyWithCount(stack.getCount() - amount));
       }
       return result;
     }
@@ -140,10 +130,10 @@ public abstract class SingleItemHandler<T extends MantleBlockEntity> implements 
    * Writes this module to NBT
    * @return  Module in NBT
    */
-  public CompoundTag writeToNBT() {
+  public CompoundTag writeToNBT(net.minecraft.core.HolderLookup.Provider provider) {
     CompoundTag nbt = new CompoundTag();
     if (!stack.isEmpty()) {
-      stack.save(nbt);
+      nbt = (CompoundTag) stack.saveOptional(provider);
     }
     return nbt;
   }
@@ -152,7 +142,8 @@ public abstract class SingleItemHandler<T extends MantleBlockEntity> implements 
    * Reads this module from NBT
    * @param nbt  NBT
    */
-  public void readFromNBT(CompoundTag nbt) {
-    stack = ItemStack.of(nbt);
+  public void readFromNBT(net.minecraft.core.HolderLookup.Provider provider, CompoundTag nbt) {
+    stack = ItemStack.parseOptional(provider, nbt);
   }
 }
+

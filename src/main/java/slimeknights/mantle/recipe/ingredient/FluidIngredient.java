@@ -10,12 +10,12 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 import slimeknights.mantle.data.loadable.IAmLoadable;
 import slimeknights.mantle.data.loadable.Loadable;
 import slimeknights.mantle.data.loadable.Loadables;
 import slimeknights.mantle.data.loadable.common.FluidStackLoadable;
-import slimeknights.mantle.data.loadable.field.LegacyField;
+
 import slimeknights.mantle.data.loadable.mapping.EitherLoadable;
 import slimeknights.mantle.data.loadable.primitive.IntLoadable;
 import slimeknights.mantle.data.loadable.record.RecordLoadable;
@@ -43,11 +43,11 @@ public abstract class FluidIngredient implements IAmLoadable {
   /** Loadable for network writing of fluids, we use optional stack here for the sake of empty ingredients; thats the only way empty gets in here */
   private static final Loadable<FluidIngredient> NETWORK = FluidStackLoadable.OPTIONAL_STACK.list(0).flatXmap(fluids -> FluidIngredient.of(fluids.stream().map(FluidIngredient::of).toList()), FluidIngredient::getAllFluids);
   /** Loadable for fluid matches */
-  private static final RecordLoadable<FluidMatch> FLUID_MATCH = RecordLoadable.create(new LegacyField<>(Loadables.FLUID.requiredField("fluid", i -> i.fluid), "name"), IntLoadable.FROM_ONE.requiredField("amount", i -> i.amount), FluidIngredient::of);
+  private static final RecordLoadable<FluidMatch> FLUID_MATCH = RecordLoadable.create(Loadables.FLUID.requiredField("fluid", FluidMatch::getFluid), IntLoadable.FROM_ONE.requiredField("amount", FluidMatch::getAmount), FluidMatch::new);
   /** Loadable for tag matches */
-  private static final RecordLoadable<TagMatch> TAG_MATCH = RecordLoadable.create(Loadables.FLUID_TAG.requiredField("tag", i -> i.tag), IntLoadable.FROM_ONE.requiredField("amount", i -> i.amount), FluidIngredient::of);
+  private static final RecordLoadable<TagMatch> TAG_MATCH = RecordLoadable.create(Loadables.FLUID_TAG.requiredField("tag", TagMatch::getTag), IntLoadable.FROM_ONE.requiredField("amount", TagMatch::getAmount), TagMatch::new);
   /** Loadable for tag matches */
-  private static final Loadable<Compound> COMPOUND = loadableBuilder().build(NETWORK).list(2).flatXmap(Compound::new, c -> c.ingredients);
+  private static final Loadable<Compound> COMPOUND = loadableBuilder().build(NETWORK).list(2).flatXmap(Compound::new, Compound::getIngredients);
   /** Loadable for any fluid ingredient */
   public static final Loadable<FluidIngredient> LOADABLE = loadableBuilder().array(COMPOUND).build(NETWORK);
 
@@ -191,11 +191,22 @@ public abstract class FluidIngredient implements IAmLoadable {
   /**
    * Fluid ingredient that matches a single fluid
    */
-  @AllArgsConstructor(access=AccessLevel.PRIVATE)
   private static class FluidMatch extends FluidIngredient {
-
     private final Fluid fluid;
     private final int amount;
+
+    public FluidMatch(Fluid fluid, int amount) {
+      this.fluid = fluid;
+      this.amount = amount;
+    }
+
+    public Fluid getFluid() {
+      return fluid;
+    }
+
+    public int getAmount() {
+      return amount;
+    }
 
     @Override
     public Loadable<FluidMatch> loadable() {
@@ -221,10 +232,22 @@ public abstract class FluidIngredient implements IAmLoadable {
   /**
    * Fluid ingredient that matches a tag
    */
-  @AllArgsConstructor
   private static class TagMatch extends FluidIngredient {
     private final TagKey<Fluid> tag;
     private final int amount;
+
+    public TagMatch(TagKey<Fluid> tag, int amount) {
+      this.tag = tag;
+      this.amount = amount;
+    }
+
+    public TagKey<Fluid> getTag() {
+      return tag;
+    }
+
+    public int getAmount() {
+      return amount;
+    }
 
     @Override
     public Loadable<TagMatch> loadable() {
@@ -254,9 +277,16 @@ public abstract class FluidIngredient implements IAmLoadable {
   /**
    * Fluid ingredient that matches a list of ingredients
    */
-  @RequiredArgsConstructor
   private static class Compound extends FluidIngredient {
     private final List<FluidIngredient> ingredients;
+
+    public Compound(List<FluidIngredient> ingredients) {
+      this.ingredients = ingredients;
+    }
+
+    public List<FluidIngredient> getIngredients() {
+      return ingredients;
+    }
 
     @Override
     public Loadable<Compound> loadable() {
@@ -301,3 +331,4 @@ public abstract class FluidIngredient implements IAmLoadable {
     }
   }
 }
+

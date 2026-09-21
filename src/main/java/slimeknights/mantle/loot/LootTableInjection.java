@@ -44,9 +44,10 @@ public record LootTableInjection(ResourceLocation name, List<LootPoolInjection> 
       LootPool pool = table.getPool(name);
       //noinspection ConstantConditions method is annotated wrongly
       if (pool != null) {
-        int oldLength = pool.entries.length;
-        pool.entries = Arrays.copyOf(pool.entries, oldLength + entries.length);
-        System.arraycopy(entries, 0, pool.entries, oldLength, entries.length);
+        // FIXME: pool.entries was changed from an array to a private List<LootPoolEntryContainer> in 1.21.1
+        // int oldLength = pool.entries.length;
+        // pool.entries = Arrays.copyOf(pool.entries, oldLength + entries.length);
+        // System.arraycopy(entries, 0, pool.entries, oldLength, entries.length);
       } else {
         Mantle.logger.warn("Failed to inject loot into {} pool {}", table.getLootTableId(), name);
       }

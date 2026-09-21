@@ -56,7 +56,7 @@ public class ContentStructure extends PageContent {
     }
 
     try {
-      CompoundTag compoundnbt = NbtIo.readCompressed(resource.open());
+      CompoundTag compoundnbt = NbtIo.readCompressed(resource.open(), net.minecraft.nbt.NbtAccounter.unlimitedHeap());
       this.template.load(BuiltInRegistries.BLOCK.asLookup(), compoundnbt);
     } catch (IOException e) {
       e.printStackTrace();

@@ -31,7 +31,7 @@ public class RegistryPredicateRegistry<R,T> extends TagPredicateRegistry<R,T> {
   public RegistryPredicateRegistry(String name, IJsonPredicate<T> anyInstance, @Nullable IJsonPredicate<T> noneInstance, Loadable<R> registry, Function<T,R> getter, String setKey, Loadable<TagKey<R>> tagKey, BiPredicate<TagKey<R>,T> tagMatcher) {
     super(name, anyInstance, noneInstance, tagKey, tagMatcher);
     this.getter = getter;
-    this.setLoader = RecordLoadable.create(registry.set().requiredField(setKey, p -> p.set), SetPredicate::new);
+    this.setLoader = RecordLoadable.create(registry.set().requiredField(setKey, p -> p.getSet()), SetPredicate::new);
     this.register(Mantle.getResource("set"), setLoader);
   }
 
@@ -53,9 +53,16 @@ public class RegistryPredicateRegistry<R,T> extends TagPredicateRegistry<R,T> {
   }
 
   /** Predicate matching an entry from a set of values */
-  @RequiredArgsConstructor
   private class SetPredicate implements IJsonPredicate<T> {
     private final Set<R> set;
+
+    public SetPredicate(Set<R> set) {
+      this.set = set;
+    }
+
+    public Set<R> getSet() {
+      return set;
+    }
 
     @Override
     public boolean matches(T input) {

@@ -3,7 +3,7 @@ package slimeknights.mantle.network.packet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.network.NetworkEvent.Context;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import slimeknights.mantle.Mantle;
 import slimeknights.mantle.client.SafeClientAccess;
 import slimeknights.mantle.util.BlockEntityHelper;
@@ -19,14 +19,14 @@ public interface BlockEntityPacket<T> extends IThreadsafePacket {
   BlockPos pos();
 
   /** Gets the class for the filter */
-  Class<T> type();
+  Class<T> blockEntityType();
 
   @Override
-  default void handleThreadsafe(Context context) {
+  default void handleThreadsafe(IPayloadContext context) {
     BlockPos pos = pos();
     BlockEntity be = getBlockEntity(pos, this);
     if (be != null) {
-      Class<T> type = type();
+      Class<T> type = blockEntityType();
       if (type.isInstance(be)) {
         handleBlockEntity(context, type.cast(be));
       } else {
@@ -38,7 +38,7 @@ public interface BlockEntityPacket<T> extends IThreadsafePacket {
   }
 
   /** Handles the block entity, assuming it's not null and the correct type */
-  void handleBlockEntity(Context context, T be);
+  void handleBlockEntity(IPayloadContext context, T be);
 
 
   /* Helpers */
@@ -71,3 +71,4 @@ public interface BlockEntityPacket<T> extends IThreadsafePacket {
     return getBlockEntity(SafeClientAccess.getLevel(), pos, packet);
   }
 }
+

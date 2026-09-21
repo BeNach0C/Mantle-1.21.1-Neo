@@ -7,12 +7,13 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.world.level.storage.loot.predicates.LootItemConditionType;
+import net.neoforged.neoforge.common.conditions.ICondition;
 import slimeknights.mantle.Mantle;
 import slimeknights.mantle.loot.MantleLoot;
 
 /** Inverted form of {@link TagEmptyCondition} as filled is way more common a desire than empty. */
 public class TagFilledCondition<T> extends TagCondition<T> implements LootItemCondition {
-  public static final Serializer<TagFilledCondition<?>> SERIALIZER = new Serializer<>(Mantle.getResource("tag_filled"), TagFilledCondition::new);
+  public static final com.mojang.serialization.MapCodec<TagFilledCondition<?>> CODEC = TagCondition.makeCodec(TagFilledCondition::new);
 
   public TagFilledCondition(TagKey<T> tag) {
     super(tag);
@@ -23,8 +24,8 @@ public class TagFilledCondition<T> extends TagCondition<T> implements LootItemCo
   }
 
   @Override
-  public ResourceLocation getID() {
-    return SERIALIZER.getID();
+  public com.mojang.serialization.MapCodec<? extends ICondition> codec() {
+    return CODEC;
   }
 
   @Override

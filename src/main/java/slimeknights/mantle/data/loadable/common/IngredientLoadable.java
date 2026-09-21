@@ -13,7 +13,7 @@ public enum IngredientLoadable implements Loadable<Ingredient> {
 
   @Override
   public Ingredient convert(JsonElement element, String key, TypedMap context) {
-    return Ingredient.fromJson(element, this == ALLOW_EMPTY);
+    return (this == ALLOW_EMPTY ? Ingredient.CODEC : Ingredient.CODEC_NONEMPTY).parse(com.mojang.serialization.JsonOps.INSTANCE, element).getOrThrow(com.google.gson.JsonSyntaxException::new);
   }
 
   @Override
@@ -21,16 +21,16 @@ public enum IngredientLoadable implements Loadable<Ingredient> {
     if (object.isEmpty() && this == DISALLOW_EMPTY) {
       throw new IllegalArgumentException("Ingredient cannot be empty");
     }
-    return object.toJson();
+    return (this == ALLOW_EMPTY ? Ingredient.CODEC : Ingredient.CODEC_NONEMPTY).encodeStart(com.mojang.serialization.JsonOps.INSTANCE, object).getOrThrow(IllegalStateException::new);
   }
 
   @Override
   public Ingredient decode(FriendlyByteBuf buffer, TypedMap context) {
-    return Ingredient.fromNetwork(buffer);
+    return Ingredient.CONTENTS_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buffer);
   }
 
   @Override
   public void encode(FriendlyByteBuf buffer, Ingredient object) {
-    object.toNetwork(buffer);
+    Ingredient.CONTENTS_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buffer, object);
   }
 }

@@ -10,8 +10,8 @@ import net.minecraft.commands.synchronization.SuggestionProviders;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.client.event.RegisterClientCommandsEvent;
-import net.minecraftforge.common.MinecraftForge;
+import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import slimeknights.mantle.Mantle;
 import slimeknights.mantle.client.book.BookLoader;
 
@@ -39,14 +39,14 @@ public class MantleClientCommand {
     // source command suggestions
     FileToIdConverter atlases = new FileToIdConverter("textures/atlas", ".png");
     ClientSourcesCommand.registerMinecraft("atlases", (context, builder)
-      -> SharedSuggestionProvider.suggestResource(Minecraft.getInstance().getModelManager().atlases.atlases.keySet().stream().map(atlases::fileToId), builder));
+      -> SharedSuggestionProvider.suggestResource(java.util.List.of(atlases.fileToId(net.minecraft.client.renderer.texture.TextureAtlas.LOCATION_BLOCKS), atlases.fileToId(net.minecraft.client.renderer.texture.TextureAtlas.LOCATION_PARTICLES)), builder));
     ClientSourcesCommand.registerMinecraft("blockstates", (context, builder)
       -> SharedSuggestionProvider.suggestResource(BuiltInRegistries.BLOCK.keySet(), builder));
     ClientSourcesCommand.register("item_models", "models/item", ".json", (context, builder)
       -> SharedSuggestionProvider.suggestResource(BuiltInRegistries.ITEM.keySet(), builder));
 
     // add command listener
-    MinecraftForge.EVENT_BUS.addListener(MantleClientCommand::registerCommand);
+    NeoForge.EVENT_BUS.addListener(MantleClientCommand::registerCommand);
   }
 
   /** Registers a sub command for the root Mantle client command */

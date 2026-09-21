@@ -25,7 +25,7 @@ public class TagPredicateRegistry<R,T> extends PredicateRegistry<T> {
   public TagPredicateRegistry(String name, IJsonPredicate<T> anyInstance, @Nullable IJsonPredicate<T> noneInstance, Loadable<TagKey<R>> tagKey, BiPredicate<TagKey<R>,T> tagMatcher) {
     super(name, anyInstance, noneInstance);
     this.tagMatcher = tagMatcher;
-    this.tagLoader = RecordLoadable.create(tagKey.requiredField("tag", p -> p.tag), TagPredicate::new);
+    this.tagLoader = RecordLoadable.create(tagKey.requiredField("tag", p -> p.getTag()), TagPredicate::new);
     this.register(Mantle.getResource("tag"), tagLoader);
   }
 
@@ -41,9 +41,16 @@ public class TagPredicateRegistry<R,T> extends PredicateRegistry<T> {
   }
 
   /** Predicate matching values in a tag */
-  @RequiredArgsConstructor
   private class TagPredicate implements IJsonPredicate<T> {
     private final TagKey<R> tag;
+
+    public TagPredicate(TagKey<R> tag) {
+      this.tag = tag;
+    }
+
+    public TagKey<R> getTag() {
+      return tag;
+    }
 
     @Override
     public boolean matches(T input) {

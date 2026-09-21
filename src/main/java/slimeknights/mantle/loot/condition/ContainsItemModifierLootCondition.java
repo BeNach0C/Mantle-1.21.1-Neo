@@ -17,11 +17,15 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 /** Loot condition requiring one of the existing items is the given stack */
-@RequiredArgsConstructor
 public class ContainsItemModifierLootCondition implements ILootModifierCondition {
   public static final ResourceLocation ID = Mantle.getResource("contains_item");
   private final Ingredient ingredient;
   private final int amountNeeded;
+
+  public ContainsItemModifierLootCondition(Ingredient ingredient, int amountNeeded) {
+    this.ingredient = ingredient;
+    this.amountNeeded = amountNeeded;
+  }
 
   public ContainsItemModifierLootCondition(Ingredient ingredient) {
     this(ingredient, 1);
@@ -41,11 +45,10 @@ public class ContainsItemModifierLootCondition implements ILootModifierCondition
     return false;
   }
 
-  @Override
   public JsonObject serialize(JsonSerializationContext context) {
     JsonObject json = new JsonObject();
     json.addProperty("type", ID.toString());
-    json.add("ingredient", ingredient.toJson());
+    json.add("ingredient", Ingredient.CODEC_NONEMPTY.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, ingredient).getOrThrow(IllegalStateException::new));
     if (amountNeeded != 1) {
       json.addProperty("needed", amountNeeded);
     }
@@ -55,7 +58,7 @@ public class ContainsItemModifierLootCondition implements ILootModifierCondition
   /** Parses this from JSON */
   public static ContainsItemModifierLootCondition deserialize(JsonElement element, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
     JsonObject json = GsonHelper.convertToJsonObject(element, "condition");
-    Ingredient ingredient = Ingredient.fromJson(GsonHelper.getAsJsonObject(json, "ingredient"));
+    Ingredient ingredient = Ingredient.CODEC_NONEMPTY.parse(com.mojang.serialization.JsonOps.INSTANCE, GsonHelper.getAsJsonObject(json, "ingredient")).getOrThrow(JsonParseException::new);
     int needed = GsonHelper.getAsInt(json, "needed", 1);
     return new ContainsItemModifierLootCondition(ingredient, needed);
   }

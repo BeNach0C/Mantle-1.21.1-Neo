@@ -22,10 +22,9 @@ import java.util.stream.Collectors;
 /**
  * Extension of the vanilla ingredient to make stack size checks
  */
-@RequiredArgsConstructor(staticName = "of")
 public class SizedIngredient implements Predicate<ItemStack> {
-  /** Empty sized ingredient wrapper. Matches only the empty stack of size 0 */
-  public static final SizedIngredient EMPTY = of(Ingredient.EMPTY, 0);
+  // Empty ingredient logic will be updated next if Ingredient.EMPTY is gone, but let's first add constructor
+  public static final SizedIngredient EMPTY = new SizedIngredient(net.minecraft.world.item.crafting.Ingredient.of(), 0);
 
   public static final RecordLoadable<SizedIngredient> LOADABLE = RecordLoadable.create(
     IngredientLoadable.DISALLOW_EMPTY.tryDirectField("ingredient", SizedIngredient::getIngredient, "amount_needed"),
@@ -33,11 +32,21 @@ public class SizedIngredient implements Predicate<ItemStack> {
     SizedIngredient::new);
 
   /** Ingredient to use in recipe match */
-  @Getter
   private final Ingredient ingredient;
   /** Amount of this ingredient needed */
-  @Getter
   private final int amountNeeded;
+
+  public SizedIngredient(Ingredient ingredient, int amountNeeded) {
+    this.ingredient = ingredient;
+    this.amountNeeded = amountNeeded;
+  }
+
+  public static SizedIngredient of(Ingredient ingredient, int amountNeeded) {
+    return new SizedIngredient(ingredient, amountNeeded);
+  }
+
+  public Ingredient getIngredient() { return ingredient; }
+  public int getAmountNeeded() { return amountNeeded; }
 
   /** Last list of matching stacks from the ingredient */
   private WeakReference<ItemStack[]> lastIngredientMatch;

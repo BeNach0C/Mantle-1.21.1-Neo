@@ -19,7 +19,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.alchemy.Potion;
-import net.minecraft.world.item.alchemy.PotionUtils;
+// import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
@@ -37,13 +37,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.ForgeMod;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidHandlerItem;
-import net.minecraftforge.fluids.capability.templates.EmptyFluidHandler;
+import net.neoforged.neoforge.common.NeoForgeMod;
 import slimeknights.mantle.command.argument.RegistryTagSource;
 import slimeknights.mantle.command.argument.TagSource;
 import slimeknights.mantle.command.argument.TagSourceArgument;
@@ -178,15 +172,11 @@ public class TagsForCommand {
   private static int heldFluid(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
     CommandSourceStack source = context.getSource();
     ItemStack stack = source.getPlayerOrException().getMainHandItem();
-    LazyOptional<IFluidHandlerItem> capability = stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM);
-    if (capability.isPresent()) {
-      IFluidHandler handler = capability.map(h -> (IFluidHandler) h).orElse(EmptyFluidHandler.INSTANCE);
-      if (handler.getTanks() > 0) {
-        FluidStack fluidStack = handler.getFluidInTank(0);
-        if (!fluidStack.isEmpty()) {
-          Fluid fluid = fluidStack.getFluid();
-          return printOwningTags(context, BuiltInRegistries.FLUID, fluid);
-        }
+    net.neoforged.neoforge.fluids.capability.IFluidHandlerItem handler = stack.getCapability(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.ITEM);
+    if (handler != null && handler.getTanks() > 0) {
+      net.neoforged.neoforge.fluids.FluidStack fluid = handler.getFluidInTank(0);
+      if (!fluid.isEmpty()) {
+        return printOwningTags(context, BuiltInRegistries.FLUID, fluid.getFluid());
       }
     }
     source.sendSuccess(() -> NO_HELD_FLUID, true);
@@ -197,26 +187,25 @@ public class TagsForCommand {
   private static int heldPotion(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
     CommandSourceStack source = context.getSource();
     ItemStack stack = source.getPlayerOrException().getMainHandItem();
-    Potion potion = PotionUtils.getPotion(stack);
-    if (potion != Potions.EMPTY) {
-      return printOwningTags(context, BuiltInRegistries.POTION, potion);
+    net.minecraft.world.item.alchemy.PotionContents potionContents = stack.get(net.minecraft.core.component.DataComponents.POTION_CONTENTS);
+    if (potionContents != null && potionContents.potion().isPresent()) {
+      return printOwningTags(context, BuiltInRegistries.POTION, potionContents.potion().get().value());
     }
     source.sendSuccess(() -> NO_HELD_POTION, true);
     return 0;
   }
 
-  /** Block tags for held item */
+  /** Enchantment tags for held item */
   private static int heldEnchantments(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
     CommandSourceStack source = context.getSource();
     ItemStack stack = source.getPlayerOrException().getMainHandItem();
-    Map<Enchantment, Integer> enchantments = EnchantmentHelper.getEnchantments(stack);
-    if (!enchantments.isEmpty()) {
-      int totalTags = 0;
-      // print tags for each contained enchantment
-      for (Enchantment enchantment : enchantments.keySet()) {
-        totalTags += printOwningTags(context, BuiltInRegistries.ENCHANTMENT, enchantment);
+    net.minecraft.world.item.enchantment.ItemEnchantments enchantments = stack.get(net.minecraft.core.component.DataComponents.ENCHANTMENTS);
+    if (enchantments != null && !enchantments.isEmpty()) {
+      int count = 0;
+      for (net.minecraft.core.Holder<Enchantment> enchantment : enchantments.keySet()) {
+        count += printOwningTags(context, context.getSource().registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT), enchantment.value());
       }
-      return totalTags;
+      return count;
     }
     source.sendSuccess(() -> NO_HELD_ENCHANTMENT, true);
     return 0;
@@ -227,7 +216,7 @@ public class TagsForCommand {
     CommandSourceStack source = context.getSource();
     ItemStack stack = source.getPlayerOrException().getMainHandItem();
     if (stack.getItem() instanceof SpawnEggItem egg) {
-      EntityType<?> type = egg.getType(stack.getTag());
+      EntityType<?> type = egg.getType(stack);
       return printOwningTags(context, BuiltInRegistries.ENTITY_TYPE, type);
     }
     source.sendSuccess(() -> NO_HELD_ENTITY, true);
@@ -312,7 +301,7 @@ public class TagsForCommand {
     Player player = source.getPlayerOrException();
     Vec3 start = player.getEyePosition(1F);
     Vec3 look = player.getLookAngle();
-    double range = Objects.requireNonNull(player.getAttribute(ForgeMod.ENTITY_REACH.get())).getValue();
+    double range = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ENTITY_INTERACTION_RANGE);
     Vec3 direction = start.add(look.x * range, look.y * range, look.z * range);
     AABB bb = player.getBoundingBox().expandTowards(look.x * range, look.y * range, look.z * range).expandTowards(1, 1, 1);
     EntityHitResult entityTrace = ProjectileUtil.getEntityHitResult(source.getLevel(), player, start, direction, bb, e -> true);

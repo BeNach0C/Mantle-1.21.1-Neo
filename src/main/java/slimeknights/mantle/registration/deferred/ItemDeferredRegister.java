@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 public class ItemDeferredRegister extends DeferredRegisterWrapper<Item> {
 
   public ItemDeferredRegister(String modID) {
-    super(Registries.ITEM, modID);
+    super(net.neoforged.neoforge.registries.DeferredRegister.createItems(modID), modID);
   }
 
   /**

@@ -18,7 +18,7 @@ import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.common.crafting.CraftingHelper;
+import net.neoforged.neoforge.common.crafting.CraftingHelper;
 import slimeknights.mantle.Mantle;
 import slimeknights.mantle.recipe.MantleRecipes;
 import slimeknights.mantle.recipe.helper.LoggingRecipeSerializer;
@@ -33,13 +33,14 @@ import java.util.Map;
 @SuppressWarnings("WeakerAccess")
 public class ShapedRetexturedRecipe extends ShapedRecipe {
   /** Ingredient used to determine the texture on the output */
-  @Getter
+  
   private final Ingredient texture;
+  public Ingredient getTexture() { return texture; }
   private final boolean matchAll;
 
   /** Creates a new recipe using the passed parameters */
-  protected ShapedRetexturedRecipe(ResourceLocation id, String group, CraftingBookCategory category, int width, int height, NonNullList<Ingredient> ingredients, ItemStack result, boolean showNotification, Ingredient texture, boolean matchAll) {
-    super(id, group, category, width, height, ingredients, result, showNotification);
+  public ShapedRetexturedRecipe(String group, CraftingBookCategory category, net.minecraft.world.item.crafting.ShapedRecipePattern pattern, ItemStack result, boolean showNotification, Ingredient texture, boolean matchAll) {
+    super(group, category, pattern, result, showNotification);
     this.texture = texture;
     this.matchAll = matchAll;
   }
@@ -50,8 +51,8 @@ public class ShapedRetexturedRecipe extends ShapedRecipe {
    * @param texture    Ingredient to use for the texture
    * @param matchAll   If true, all inputs must match for the recipe to match
    */
-  protected ShapedRetexturedRecipe(ShapedRecipe orig, Ingredient texture, boolean matchAll) {
-    this(orig.getId(), orig.getGroup(), orig.category(), orig.getWidth(), orig.getHeight(), orig.getIngredients(), orig.result, orig.showNotification(), texture, matchAll);
+  public ShapedRetexturedRecipe(ShapedRecipe orig, Ingredient texture, boolean matchAll) {
+    this(orig.getGroup(), orig.category(), orig.pattern, orig.getResultItem(null), orig.showNotification(), texture, matchAll);
   }
 
   /**
@@ -64,10 +65,10 @@ public class ShapedRetexturedRecipe extends ShapedRecipe {
   }
 
   @Override
-  public ItemStack assemble(CraftingContainer craftMatrix, RegistryAccess access) {
+  public ItemStack assemble(net.minecraft.world.item.crafting.CraftingInput craftMatrix, net.minecraft.core.HolderLookup.Provider access) {
     ItemStack result = super.assemble(craftMatrix, access);
     Block currentTexture = null;
-    for (int i = 0; i < craftMatrix.getContainerSize(); i++) {
+    for (int i = 0; i < craftMatrix.size(); i++) {
       ItemStack stack = craftMatrix.getItem(i);
       if (!stack.isEmpty() && texture.test(stack)) {
         // fetch texture from the block if it has one
@@ -110,54 +111,36 @@ public class ShapedRetexturedRecipe extends ShapedRecipe {
   }
 
   public static class Serializer implements LoggingRecipeSerializer<ShapedRetexturedRecipe> {
-    @Override
-    public ShapedRetexturedRecipe fromJson(ResourceLocation recipeId, JsonObject json) {
-      String group = GsonHelper.getAsString(json, "group", "");
-      CraftingBookCategory category = CraftingBookCategory.CODEC.byName(GsonHelper.getAsString(json, "category", null), CraftingBookCategory.MISC);
-      Map<String, Ingredient> key = ShapedRecipe.keyFromJson(GsonHelper.getAsJsonObject(json, "key"));
-      String[] pattern = ShapedRecipe.shrink(ShapedRecipe.patternFromJson(GsonHelper.getAsJsonArray(json, "pattern")));
-      int width = pattern[0].length();
-      int height = pattern.length;
-      NonNullList<Ingredient> inputs = ShapedRecipe.dissolvePattern(pattern, key, width, height);
-      ItemStack result = ShapedRecipe.itemStackFromJson(GsonHelper.getAsJsonObject(json, "result"));
-      boolean showNotification = GsonHelper.getAsBoolean(json, "show_notification", true);
+    public static final com.mojang.serialization.MapCodec<ShapedRetexturedRecipe> CODEC = com.mojang.serialization.codecs.RecordCodecBuilder.mapCodec(inst -> inst.group(
+      net.minecraft.world.item.crafting.RecipeSerializer.SHAPED_RECIPE.codec().forGetter(r -> (ShapedRecipe) r),
+      Ingredient.CODEC_NONEMPTY.fieldOf("texture").forGetter(ShapedRetexturedRecipe::getTexture),
+      com.mojang.serialization.Codec.BOOL.optionalFieldOf("match_all", false).forGetter(r -> r.matchAll)
+    ).apply(inst, ShapedRetexturedRecipe::new));
 
-      // fetch the texture from the map if its a primitive
-      JsonElement textureElement = JsonHelper.getElement(json, "texture");
-      Ingredient texture;
-      if (textureElement.isJsonPrimitive()) {
-        String textureKey = textureElement.getAsString();
-        if (textureKey.length() != 1) {
-          throw new JsonSyntaxException("Invalid texture key: '" + textureKey + "' is an invalid symbol (must be 1 character only).");
-        }
-        texture = key.get(textureKey);
-        if (texture == null || texture == Ingredient.EMPTY) {
-          throw new JsonSyntaxException("Texture ingredient references symbol '" + textureKey + "' but it's not defined in the key");
-        }
-      } else {
-        // if it's an object or array, treat as an ingredient object
-        texture = CraftingHelper.getIngredient(textureElement, false);
-        Mantle.logger.warn("Using deprecated ingredient format on 'texture' for `mantle:crafting_shaped_retextured`. Use key instead.");
-      }
-      boolean matchAll = false;
-      if (json.has("match_all")) {
-        matchAll = json.get("match_all").getAsBoolean();
-      }
-      return new ShapedRetexturedRecipe(recipeId, group, category, width, height, inputs, result, showNotification, texture, matchAll);
-    }
-
-    @Nullable
     @Override
-    public ShapedRetexturedRecipe fromNetworkSafe(ResourceLocation recipeId, FriendlyByteBuf buffer) {
-      ShapedRecipe recipe = SHAPED_RECIPE.fromNetwork(recipeId, buffer);
-      return recipe == null ? null : new ShapedRetexturedRecipe(recipe, Ingredient.fromNetwork(buffer), buffer.readBoolean());
+    public com.mojang.serialization.MapCodec<ShapedRetexturedRecipe> codec() {
+      return CODEC;
     }
 
     @Override
-    public void toNetworkSafe(FriendlyByteBuf buffer, ShapedRetexturedRecipe recipe) {
-      SHAPED_RECIPE.toNetwork(buffer, recipe);
-      recipe.texture.toNetwork(buffer);
-      buffer.writeBoolean(recipe.matchAll);
+    public net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, ShapedRetexturedRecipe> streamCodecSafe() {
+      return new net.minecraft.network.codec.StreamCodec<>() {
+        @Override
+        public ShapedRetexturedRecipe decode(net.minecraft.network.RegistryFriendlyByteBuf buffer) {
+          ShapedRecipe recipe = net.minecraft.world.item.crafting.RecipeSerializer.SHAPED_RECIPE.streamCodec().decode(buffer);
+          Ingredient texture = Ingredient.CONTENTS_STREAM_CODEC.decode(buffer);
+          boolean matchAll = buffer.readBoolean();
+          return new ShapedRetexturedRecipe(recipe, texture, matchAll);
+        }
+
+        @Override
+        public void encode(net.minecraft.network.RegistryFriendlyByteBuf buffer, ShapedRetexturedRecipe recipe) {
+          net.minecraft.world.item.crafting.RecipeSerializer.SHAPED_RECIPE.streamCodec().encode(buffer, recipe);
+          Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, recipe.getTexture());
+          buffer.writeBoolean(recipe.matchAll);
+        }
+      };
     }
   }
 }
+

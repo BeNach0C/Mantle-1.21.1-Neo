@@ -33,12 +33,10 @@ public abstract class RetexturedBlock extends Block implements EntityBlock {
     updateTextureBlock(world, pos, stack);
   }
 
-  @Override
   public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter world, BlockPos pos, Player player) {
     return getPickBlock(world, pos, state);
   }
 
-  @Override
   public void appendHoverText(ItemStack stack, @Nullable BlockGetter pLevel, List<Component> tooltip, TooltipFlag flag) {
     RetexturedHelper.addTooltip(stack, tooltip, flag);
   }
@@ -53,7 +51,7 @@ public abstract class RetexturedBlock extends Block implements EntityBlock {
    * @param stack Item stack
    */
   public static void updateTextureBlock(Level world, BlockPos pos, ItemStack stack) {
-    if (stack.hasTag() && world.getBlockEntity(pos) instanceof IRetexturedBlockEntity te) {
+    if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_DATA) && world.getBlockEntity(pos) instanceof IRetexturedBlockEntity te) {
       te.updateTexture(RetexturedHelper.getTextureName(stack));
     }
   }

@@ -22,11 +22,11 @@ import net.minecraft.util.GsonHelper;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.model.CompositeModel;
-import net.minecraftforge.client.model.geometry.BlockGeometryBakingContext;
-import net.minecraftforge.client.model.geometry.IGeometryBakingContext;
-import net.minecraftforge.client.model.geometry.IGeometryLoader;
-import net.minecraftforge.client.model.geometry.IUnbakedGeometry;
+import net.neoforged.neoforge.client.model.CompositeModel;
+import net.neoforged.neoforge.client.model.geometry.BlockGeometryBakingContext;
+import net.neoforged.neoforge.client.model.geometry.IGeometryBakingContext;
+import net.neoforged.neoforge.client.model.geometry.IGeometryLoader;
+import net.neoforged.neoforge.client.model.geometry.IUnbakedGeometry;
 import slimeknights.mantle.client.model.util.MantleItemLayerModel;
 import slimeknights.mantle.client.model.util.ModelTextureIteratable;
 import slimeknights.mantle.util.JsonHelper;
@@ -104,7 +104,7 @@ public class NBTKeyModel implements IUnbakedGeometry<NBTKeyModel> {
   }
 
   @Override
-  public BakedModel bake(IGeometryBakingContext owner, ModelBaker baker, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelTransform, ItemOverrides overrides, ResourceLocation modelLocation) {
+  public BakedModel bake(IGeometryBakingContext owner, ModelBaker baker, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelTransform, ItemOverrides overrides) {
     // setup transforms
     Transformation transform = MantleItemLayerModel.applyTransform(modelTransform, owner.getRootTransform()).getRotation();
     // build variants map
@@ -127,9 +127,11 @@ public class NBTKeyModel implements IUnbakedGeometry<NBTKeyModel> {
 
     @Override
     public BakedModel resolve(BakedModel model, ItemStack stack, @Nullable ClientLevel world, @Nullable LivingEntity livingEntity, int pSeed) {
-      CompoundTag nbt = stack.getTag();
-      if (nbt != null && nbt.contains(nbtKey)) {
-        return variants.getOrDefault(nbt.getString(nbtKey), model);
+      if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_DATA)) {
+        CompoundTag nbt = stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA).copyTag();
+        if (nbt.contains(nbtKey)) {
+          return variants.getOrDefault(nbt.getString(nbtKey), model);
+        }
       }
       return model;
     }

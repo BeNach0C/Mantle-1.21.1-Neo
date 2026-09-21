@@ -15,11 +15,16 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /** Represents a trivially mapped loadable that serializes/writes to network like another loadable */
-@RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class MappedLoadable<F,T> implements Loadable<T> {
   private final Loadable<F> base;
   protected final BiFunction<F,ErrorFactory,T> from;
   protected final BiFunction<T,ErrorFactory,F> to;
+
+  protected MappedLoadable(Loadable<F> base, BiFunction<F,ErrorFactory,T> from, BiFunction<T,ErrorFactory,F> to) {
+    this.base = base;
+    this.from = from;
+    this.to = to;
+  }
 
   /** Creates a new loadable for a non-record loadable */
   public static <T,F> Loadable<T> of(Loadable<F> base, BiFunction<F,ErrorFactory,T> from, BiFunction<T,ErrorFactory,F> to) {

@@ -75,10 +75,13 @@ public class WoodBlockObject extends FenceBuildingBlockObject {
     this.wallSign = wallSign;
     this.hangingSign = hangingSign;
     this.wallHangingSign = wallHangingSign;
-    ResourceLocation tagName = new ResourceLocation(name.getNamespace(), name.getPath() + "_logs");
+    ResourceLocation tagName = ResourceLocation.fromNamespaceAndPath(name.getNamespace(), name.getPath() + "_logs");
     this.logBlockTag = BlockTags.create(tagName);
     this.logItemTag = ItemTags.create(tagName);
   }
+
+  public TagKey<Block> getLogBlockTag() { return logBlockTag; }
+  public TagKey<Item> getLogItemTag() { return logItemTag; }
 
   @SuppressWarnings("deprecation")
   public WoodBlockObject(ResourceLocation name, WoodType woodType, BuildingBlockObject planks,
@@ -101,7 +104,7 @@ public class WoodBlockObject extends FenceBuildingBlockObject {
     this.wallSign = getCastedHolder(BuiltInRegistries.BLOCK, wallSign);
     this.hangingSign = getCastedHolder(BuiltInRegistries.BLOCK, hangingSign);
     this.wallHangingSign = getCastedHolder(BuiltInRegistries.BLOCK, wallHangingSign);
-    ResourceLocation tagName = new ResourceLocation(name.getNamespace(), name.getPath() + "_logs");
+    ResourceLocation tagName = ResourceLocation.fromNamespaceAndPath(name.getNamespace(), name.getPath() + "_logs");
     this.logBlockTag = BlockTags.create(tagName);
     this.logItemTag = ItemTags.create(tagName);
   }

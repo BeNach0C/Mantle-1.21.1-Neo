@@ -19,8 +19,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.model.data.ModelData;
-import net.minecraftforge.client.model.data.ModelProperty;
+import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.client.model.data.ModelProperty;
 import slimeknights.mantle.Mantle;
 
 import javax.annotation.Nullable;
@@ -61,7 +61,8 @@ public final class RetexturedHelper {
    * @return  Texture, or empty string if none
    */
   public static String getTextureName(ItemStack stack) {
-    return getTextureName(stack.getTag());
+    // return getTextureName(stack.getTag());
+    return "";
   }
 
   /**
@@ -88,7 +89,7 @@ public final class RetexturedHelper {
     if (!name.isEmpty()) {
       ResourceLocation location = ResourceLocation.tryParse(name);
       if (location != null) {
-        return BuiltInRegistries.BLOCK.get(new ResourceLocation(name));
+        return BuiltInRegistries.BLOCK.get(ResourceLocation.parse(name));
       }
     }
     return Blocks.AIR;
@@ -127,11 +128,13 @@ public final class RetexturedHelper {
    * @return The item stack with the proper NBT
    */
   public static ItemStack setTexture(ItemStack stack, String name) {
+    /*
     if (!name.isEmpty()) {
       setTexture(stack.getOrCreateTag(), name);
     } else if (stack.hasTag()) {
       setTexture(stack.getTag(), name);
     }
+    */
     return stack;
   }
 

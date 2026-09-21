@@ -8,14 +8,14 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingDropsEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.common.EventBusSubscriber.Bus;
 import slimeknights.mantle.datagen.MantleTags;
 
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /** Handles events for any Mantle driven logic. */
-@EventBusSubscriber(modid = Mantle.modId, bus = Bus.FORGE)
+@EventBusSubscriber(modid = Mantle.modId, bus = Bus.GAME)
 public class MantleEvents {
   /* Soulbound */
   /**
@@ -36,6 +36,7 @@ public class MantleEvents {
   /** Called when the player dies to store the slot to return items into */
   @SubscribeEvent
   static void onLivingDeath(LivingDeathEvent event) {
+    /*
     // this is the latest we can add slot markers to the items so we can return them to slots
     LivingEntity entity = event.getEntity();
     if (!entity.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) && entity instanceof Player player && !(player instanceof FakePlayer)) {
@@ -50,11 +51,13 @@ public class MantleEvents {
         }
       }
     }
+    */
   }
 
   /** Called when the player dies to store the soulbound items in the original inventory */
   @SubscribeEvent(priority = EventPriority.HIGH)
   static void onPlayerDropItems(LivingDropsEvent event) {
+    /*
     // only care about real players with keep inventory off
     LivingEntity entity = event.getEntity();
     if (!entity.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) && entity instanceof Player player && !(entity instanceof FakePlayer)) {
@@ -99,11 +102,13 @@ public class MantleEvents {
         }
       }
     }
+    */
   }
 
   /** Called when the new player is created to fetch the soulbound item from the old */
   @SubscribeEvent(priority = EventPriority.HIGH)
   static void onPlayerClone(PlayerEvent.Clone event) {
+    /*
     if (!event.isWasDeath()) {
       return;
     }
@@ -145,5 +150,6 @@ public class MantleEvents {
         clone.drop(stack, false);
       }
     }
+    */
   }
 }

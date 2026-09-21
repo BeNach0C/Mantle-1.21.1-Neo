@@ -3,7 +3,7 @@ package slimeknights.mantle.data.predicate;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
-import net.minecraftforge.common.crafting.conditions.ICondition;
+import net.neoforged.neoforge.common.conditions.ICondition;
 import slimeknights.mantle.Mantle;
 import slimeknights.mantle.data.loadable.Loadable;
 import slimeknights.mantle.data.loadable.mapping.ConditionalLoadable.ConditionalObject;
@@ -26,6 +26,8 @@ public class PredicateRegistry<T> extends DefaultingLoaderRegistry<IJsonPredicat
   @Nullable
   private final IJsonPredicate<T> noneInstance;
 
+  private final String registryName;
+
   /**
    * Creates a new registry for predicates.
    * @param name          Name to display in error messages
@@ -34,6 +36,7 @@ public class PredicateRegistry<T> extends DefaultingLoaderRegistry<IJsonPredicat
    */
   public PredicateRegistry(String name, IJsonPredicate<T> anyInstance, @Nullable IJsonPredicate<T> noneInstance) {
     super(name, anyInstance, noneInstance, true);
+    this.registryName = name;
     this.noneInstance = noneInstance;
     // create common types
     Loadable<List<IJsonPredicate<T>>> list = this.list(2);
@@ -103,16 +106,19 @@ public class PredicateRegistry<T> extends DefaultingLoaderRegistry<IJsonPredicat
   @SuppressWarnings("unused") // API
   public IJsonPredicate<T> conditional(IJsonPredicate<T> ifTrue, ICondition... conditions) {
     if (noneInstance == null) {
-      throw new UnsupportedOperationException(getName() + " does not support unset ifFalse");
+      throw new UnsupportedOperationException(this.registryName + " does not support unset ifFalse");
     }
     return conditional(ifTrue, noneInstance, conditions);
   }
 
 
   /** Predicate that inverts the condition. */
-  @RequiredArgsConstructor
   public class InvertedJsonPredicate implements IJsonPredicate<T> {
     private final IJsonPredicate<T> predicate;
+
+    public InvertedJsonPredicate(IJsonPredicate<T> predicate) {
+      this.predicate = predicate;
+    }
 
     @Override
     public boolean matches(T input) {
@@ -131,9 +137,12 @@ public class PredicateRegistry<T> extends DefaultingLoaderRegistry<IJsonPredicat
   }
 
   /** Predicate that requires all children to match */
-  @RequiredArgsConstructor
   public class AndJsonPredicate implements IJsonPredicate<T> {
     private final List<IJsonPredicate<T>> children;
+
+    public AndJsonPredicate(List<IJsonPredicate<T>> children) {
+      this.children = children;
+    }
 
     @Override
     public boolean matches(T input) {
@@ -157,9 +166,12 @@ public class PredicateRegistry<T> extends DefaultingLoaderRegistry<IJsonPredicat
   }
 
   /** Predicate that requires any child to match */
-  @RequiredArgsConstructor
   public class OrJsonPredicate implements IJsonPredicate<T> {
     private final List<IJsonPredicate<T>> children;
+
+    public OrJsonPredicate(List<IJsonPredicate<T>> children) {
+      this.children = children;
+    }
 
     @Override
     public boolean matches(T input) {
@@ -183,13 +195,31 @@ public class PredicateRegistry<T> extends DefaultingLoaderRegistry<IJsonPredicat
   }
 
   /** Predicate that runs a load condition, should be used only in datagen. */
-  @Accessors(fluent = true)
-  @Getter
-  @RequiredArgsConstructor
   public class ConditionalPredicate implements IJsonPredicate<T>, ConditionalObject<IJsonPredicate<T>> {
     private final ICondition[] conditions;
     private final IJsonPredicate<T> ifTrue;
     private final IJsonPredicate<T> ifFalse;
+
+    public ConditionalPredicate(ICondition[] conditions, IJsonPredicate<T> ifTrue, IJsonPredicate<T> ifFalse) {
+      this.conditions = conditions;
+      this.ifTrue = ifTrue;
+      this.ifFalse = ifFalse;
+    }
+
+    @Override
+    public ICondition[] conditions() {
+      return conditions;
+    }
+
+    @Override
+    public IJsonPredicate<T> ifTrue() {
+      return ifTrue;
+    }
+
+    @Override
+    public IJsonPredicate<T> ifFalse() {
+      return ifFalse;
+    }
 
     @Override
     public boolean matches(T input) {
@@ -213,3 +243,5 @@ public class PredicateRegistry<T> extends DefaultingLoaderRegistry<IJsonPredicat
     }
   }
 }
+
+

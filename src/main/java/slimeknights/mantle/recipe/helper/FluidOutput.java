@@ -4,10 +4,11 @@ import com.google.gson.JsonObject;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 import slimeknights.mantle.data.loadable.Loadables;
 import slimeknights.mantle.data.loadable.common.FluidStackLoadable;
 import slimeknights.mantle.data.loadable.common.NBTLoadable;
@@ -121,8 +122,8 @@ public abstract class FluidOutput implements Supplier<FluidStack> {
    * Writes this output to the packet buffer
    * @param buffer  Packet buffer instance
    */
-  public void write(FriendlyByteBuf buffer) {
-    buffer.writeFluidStack(get());
+  public void write(RegistryFriendlyByteBuf buffer) {
+    net.neoforged.neoforge.fluids.FluidStack.STREAM_CODEC.encode(buffer, get());
   }
 
   /**
@@ -130,17 +131,25 @@ public abstract class FluidOutput implements Supplier<FluidStack> {
    * @param buffer  Buffer instance
    * @return  Item output
    */
-  public static FluidOutput read(FriendlyByteBuf buffer) {
-    return fromStack(buffer.readFluidStack());
+  public static FluidOutput read(RegistryFriendlyByteBuf buffer) {
+    return fromStack(net.neoforged.neoforge.fluids.FluidStack.STREAM_CODEC.decode(buffer));
   }
 
   /** Class for an output that is just an item, simplifies NBT for serializing as vanilla forces NBT to be set for tools and forge goes through extra steps when NBT is set */
-  @RequiredArgsConstructor
   private static class OfFluid extends FluidOutput {
     private final Fluid fluid;
-    @Getter
     private final int amount;
     private FluidStack cachedStack;
+
+    public OfFluid(Fluid fluid, int amount) {
+      this.fluid = fluid;
+      this.amount = amount;
+    }
+
+    @Override
+    public int getAmount() {
+      return amount;
+    }
 
     @Override
     public FluidStack get() {
@@ -160,9 +169,12 @@ public abstract class FluidOutput implements Supplier<FluidStack> {
   }
 
   /** Class for an output that is just a stack */
-  @RequiredArgsConstructor
   private static class OfStack extends FluidOutput {
     private final FluidStack stack;
+
+    public OfStack(FluidStack stack) {
+      this.stack = stack;
+    }
 
     @Override
     public FluidStack get() {
@@ -181,15 +193,28 @@ public abstract class FluidOutput implements Supplier<FluidStack> {
   }
 
   /** Class for an output from a tag preference */
-  @RequiredArgsConstructor
   private static class OfTagPreference extends FluidOutput {
-    @Getter
     private final TagKey<Fluid> tag;
-    @Getter
     private final int amount;
     @Nullable
     private final CompoundTag nbt;
     private FluidStack cachedResult = null;
+
+    public OfTagPreference(TagKey<Fluid> tag, int amount, @Nullable CompoundTag nbt) {
+      this.tag = tag;
+      this.amount = amount;
+      this.nbt = nbt;
+    }
+
+    @Override
+    public TagKey<Fluid> getTag() {
+      return tag;
+    }
+
+    @Override
+    public int getAmount() {
+      return amount;
+    }
 
     @Override
     public FluidStack get() {
@@ -203,7 +228,7 @@ public abstract class FluidOutput implements Supplier<FluidStack> {
         if (preference.isEmpty()) {
           return FluidStack.EMPTY;
         }
-        cachedResult = new FluidStack(preference.orElseThrow(), amount, nbt);
+        cachedResult = new FluidStack(preference.orElseThrow(), amount);
       }
       return cachedResult;
     }
@@ -288,3 +313,6 @@ public abstract class FluidOutput implements Supplier<FluidStack> {
     }
   }
 }
+
+
+

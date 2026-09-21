@@ -24,10 +24,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
-import net.minecraftforge.common.ToolAction;
-import net.minecraftforge.common.loot.LootModifierManager;
-import net.minecraftforge.fluids.FluidType;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.fluids.FluidType;
 import slimeknights.mantle.client.model.util.ModelHelper;
 import slimeknights.mantle.data.loadable.common.GsonLoadable;
 import slimeknights.mantle.data.loadable.common.LazyRegistryLoadable;
@@ -47,15 +44,14 @@ public class Loadables {
 
   /** Alias for the resource location loadable as it's a common need */
   public static final StringLoadable<ResourceLocation> RESOURCE_LOCATION = ResourceLocationLoadable.DEFAULT;
-  public static final StringLoadable<ToolAction> TOOL_ACTION = StringLoadable.DEFAULT.flatXmap(ToolAction::get, ToolAction::name);
+  public static final StringLoadable<net.neoforged.neoforge.common.ItemAbility> ITEM_ABILITY = StringLoadable.DEFAULT.flatXmap(net.neoforged.neoforge.common.ItemAbility::get, net.neoforged.neoforge.common.ItemAbility::name);
 
   /* Registries */
   public static final ResourceLocationLoadable<SoundEvent> SOUND_EVENT = new RegistryLoadable<>(BuiltInRegistries.SOUND_EVENT);
   public static final ResourceLocationLoadable<Fluid> FLUID = new RegistryLoadable<>(BuiltInRegistries.FLUID);
-  public static final ResourceLocationLoadable<FluidType> FLUID_TYPE = new LazyRegistryLoadable<>(ForgeRegistries.Keys.FLUID_TYPES);
+  public static final ResourceLocationLoadable<FluidType> FLUID_TYPE = new LazyRegistryLoadable<>(net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.FLUID_TYPES);
   public static final ResourceLocationLoadable<MobEffect> MOB_EFFECT = new RegistryLoadable<>(BuiltInRegistries.MOB_EFFECT);
   public static final ResourceLocationLoadable<Block> BLOCK = new RegistryLoadable<>(BuiltInRegistries.BLOCK);
-  public static final ResourceLocationLoadable<Enchantment> ENCHANTMENT = new RegistryLoadable<>(BuiltInRegistries.ENCHANTMENT);
   public static final ResourceLocationLoadable<EntityType<?>> ENTITY_TYPE = new RegistryLoadable<>(BuiltInRegistries.ENTITY_TYPE);
   public static final ResourceLocationLoadable<Item> ITEM = new RegistryLoadable<>(BuiltInRegistries.ITEM);
   public static final ResourceLocationLoadable<Potion> POTION = new RegistryLoadable<>(BuiltInRegistries.POTION);
@@ -73,6 +69,7 @@ public class Loadables {
   public static final StringLoadable<TagKey<Fluid>> FLUID_TAG = tagKey(Registries.FLUID);
   public static final StringLoadable<TagKey<MobEffect>> MOB_EFFECT_TAG = tagKey(Registries.MOB_EFFECT);
   public static final StringLoadable<TagKey<Block>> BLOCK_TAG = tagKey(Registries.BLOCK);
+  public static final StringLoadable<ResourceKey<Enchantment>> ENCHANTMENT = resourceKey(Registries.ENCHANTMENT);
   public static final StringLoadable<TagKey<Enchantment>> ENCHANTMENT_TAG = tagKey(Registries.ENCHANTMENT);
   public static final StringLoadable<TagKey<EntityType<?>>> ENTITY_TYPE_TAG = tagKey(Registries.ENTITY_TYPE);
   public static final StringLoadable<TagKey<Item>> ITEM_TAG = tagKey(Registries.ITEM);
@@ -85,7 +82,7 @@ public class Loadables {
 
   /* Loot tables */
   /** Loadable for a loot entry instance */
-  public static final Loadable<LootPoolEntryContainer> LOOT_ENTRY = new GsonLoadable<>(LootModifierManager.GSON_INSTANCE, LootPoolEntryContainer.class);
+  public static final Loadable<LootPoolEntryContainer> LOOT_ENTRY = new slimeknights.mantle.data.loadable.common.CodecLoadable<>(slimeknights.mantle.data.MantleCodecs.LOOT_ENTRY);
 
   /** Loadable for a rotation value, from 0 to 270 */
   public static final Loadable<Integer> ROTATION = new IntLoadable(0, 270, IntNetwork.SHORT).validate((value, error) -> {
@@ -122,3 +119,4 @@ public class Loadables {
     return loadable.xmap(mapper, mapper);
   }
 }
+

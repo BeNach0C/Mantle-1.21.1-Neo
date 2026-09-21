@@ -7,12 +7,13 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.world.level.storage.loot.predicates.LootItemConditionType;
+import net.neoforged.neoforge.common.conditions.ICondition;
 import slimeknights.mantle.Mantle;
 import slimeknights.mantle.loot.MantleLoot;
 
-/** Condition that checks when a tag is empty. Same as {@link net.minecraftforge.common.crafting.conditions.TagEmptyCondition} but for any registry */
+/** Condition that checks when a tag is empty. Same as {@link net.neoforged.neoforge.common.conditions.TagEmptyCondition} but for any registry */
 public class TagEmptyCondition<T> extends TagCondition<T> implements LootItemCondition {
-  public static final Serializer<TagEmptyCondition<?>> SERIALIZER = new Serializer<>(Mantle.getResource("tag_empty"), TagEmptyCondition::new);
+  public static final com.mojang.serialization.MapCodec<TagEmptyCondition<?>> CODEC = TagCondition.makeCodec(TagEmptyCondition::new);
 
   public TagEmptyCondition(TagKey<T> tag) {
     super(tag);
@@ -23,8 +24,8 @@ public class TagEmptyCondition<T> extends TagCondition<T> implements LootItemCon
   }
 
   @Override
-  public ResourceLocation getID() {
-    return SERIALIZER.getID();
+  public com.mojang.serialization.MapCodec<? extends ICondition> codec() {
+    return CODEC;
   }
 
   @Override
@@ -43,3 +44,5 @@ public class TagEmptyCondition<T> extends TagCondition<T> implements LootItemCon
     return registry != null && !registry.getTagOrEmpty(tag).iterator().hasNext();
   }
 }
+
+

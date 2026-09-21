@@ -21,27 +21,19 @@ public class BookHelper {
    * @return The current saved page
    */
   public static String getCurrentSavedPage(@Nullable ItemStack item) {
-    if (item != null) {
-      if (!item.isEmpty() && item.hasTag()) {
-        CompoundTag bookNBT = item.getOrCreateTag().getCompound(BOOK_COMPOUND).getCompound(BOOK_DATA_COMPOUND);
-
-        if (bookNBT.contains(NBT_CURRENT_PAGE, 8)) {
-          return bookNBT.getString(NBT_CURRENT_PAGE);
-        }
+    if (item != null && !item.isEmpty()) {
+      net.minecraft.world.item.component.CustomData data = item.getOrDefault(net.minecraft.core.component.DataComponents.CUSTOM_DATA, net.minecraft.world.item.component.CustomData.EMPTY);
+      CompoundTag bookNBT = data.copyTag().getCompound(BOOK_COMPOUND).getCompound(BOOK_DATA_COMPOUND);
+      if (bookNBT.contains(NBT_CURRENT_PAGE, 8)) {
+        return bookNBT.getString(NBT_CURRENT_PAGE);
       }
     }
-
     return "";
   }
 
-  /**
-   * Saves the current open page to the given book ItemStack.
-   *
-   * @param stack       the current book stack
-   * @param currentPage the current open page
-   */
   public static void writeSavedPageToBook(ItemStack stack, String currentPage) {
-    CompoundTag compoundNBT = stack.getOrCreateTag();
+    net.minecraft.world.item.component.CustomData data = stack.getOrDefault(net.minecraft.core.component.DataComponents.CUSTOM_DATA, net.minecraft.world.item.component.CustomData.EMPTY);
+    CompoundTag compoundNBT = data.copyTag();
 
     CompoundTag mantleCompound = compoundNBT.getCompound(BOOK_COMPOUND);
     CompoundTag bookCompound = compoundNBT.getCompound(BOOK_DATA_COMPOUND);
@@ -50,6 +42,6 @@ public class BookHelper {
 
     mantleCompound.put(BOOK_DATA_COMPOUND, bookCompound);
     compoundNBT.put(BOOK_COMPOUND, mantleCompound);
-    stack.setTag(compoundNBT);
+    stack.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA, net.minecraft.world.item.component.CustomData.of(compoundNBT));
   }
 }

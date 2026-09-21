@@ -18,6 +18,7 @@ public class FallbackPredicateRegistry<T,F> extends PredicateRegistry<T> {
   private final Function<T,F> getter;
   private final PredicateRegistry<F> fallback;
   private final RecordLoadable<FallbackPredicate> fallbackLoader;
+  private final String registryName;
 
   /**
    * Creates a new registry for predicates that delegates to another predicate registry if the loader type is absent.
@@ -30,6 +31,7 @@ public class FallbackPredicateRegistry<T,F> extends PredicateRegistry<T> {
    */
   public FallbackPredicateRegistry(String name, IJsonPredicate<T> anyInstance, @Nullable IJsonPredicate<T> noneInstance, PredicateRegistry<F> fallback, Function<T,F> getter, String fallbackName) {
     super(name, anyInstance, noneInstance);
+    this.registryName = name;
     this.fallback = fallback;
     this.getter = getter;
     this.fallbackLoader = RecordLoadable.create(fallback.directField(fallbackName + "_type", p -> p.predicate), FallbackPredicate::new);
@@ -65,7 +67,7 @@ public class FallbackPredicateRegistry<T,F> extends PredicateRegistry<T> {
       }
       return new FallbackPredicate(this.fallback.convert(element, key, context));
     } else {
-      throw new JsonSyntaxException("Invalid " + getName() + " JSON at " + key + ", must be a JSON object" + (compact ? " or a string" : ""));
+      throw new JsonSyntaxException("Invalid " + this.registryName + " JSON at " + key + ", must be a JSON object" + (compact ? " or a string" : ""));
     }
   }
 
@@ -107,9 +109,12 @@ public class FallbackPredicateRegistry<T,F> extends PredicateRegistry<T> {
   }
 
   /** Predicate matching another predicate type */
-  @RequiredArgsConstructor
   public class FallbackPredicate implements IJsonPredicate<T>, NestedPredicate<F> {
     private final IJsonPredicate<F> predicate;
+
+    public FallbackPredicate(IJsonPredicate<F> predicate) {
+      this.predicate = predicate;
+    }
 
     @Override
     public IJsonPredicate<F> predicate() {

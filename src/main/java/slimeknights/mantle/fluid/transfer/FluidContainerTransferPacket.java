@@ -1,40 +1,49 @@
 package slimeknights.mantle.fluid.transfer;
 
-import lombok.RequiredArgsConstructor;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.Item;
-import net.minecraftforge.network.NetworkEvent.Context;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.core.registries.Registries;
+import slimeknights.mantle.Mantle;
 import slimeknights.mantle.network.packet.IThreadsafePacket;
-
+import net.minecraft.network.codec.StreamCodec;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.HashSet;
+import io.netty.buffer.ByteBuf;
 
 /** Packet to sync fluid container transfer */
-@RequiredArgsConstructor
 public class FluidContainerTransferPacket implements IThreadsafePacket {
+  public static final Type<FluidContainerTransferPacket> ID = new Type<>(Mantle.getResource("fluid_container_transfer"));
+  
+  public static final StreamCodec<RegistryFriendlyByteBuf, FluidContainerTransferPacket> CODEC = StreamCodec.composite(
+          ByteBufCodecs.collection(HashSet::new, ByteBufCodecs.registry(Registries.ITEM)),
+          p -> p.items,
+          FluidContainerTransferPacket::new
+  );
+
   private final Set<Item> items;
 
-  public FluidContainerTransferPacket(FriendlyByteBuf buffer) {
-    int size = buffer.readVarInt();
-    List<Item> builder = new ArrayList<>(size);
-    for (int i = 0; i < size; i++) {
-      builder.add(buffer.readRegistryIdUnsafe(ForgeRegistries.ITEMS));
-    }
-    this.items = Set.copyOf(builder);
+  public FluidContainerTransferPacket(Set<Item> items) {
+    this.items = items;
   }
 
   @Override
-  public void encode(FriendlyByteBuf buffer) {
-    buffer.writeVarInt(items.size());
-    for (Item item : items) {
-      buffer.writeRegistryIdUnsafe(ForgeRegistries.ITEMS, item);
-    }
+  public Type<FluidContainerTransferPacket> type() {
+    return ID;
   }
 
   @Override
-  public void handleThreadsafe(Context context) {
+  public void encode(RegistryFriendlyByteBuf buffer) {
+    CODEC.encode(buffer, this);
+  }
+
+  @Override
+  public void handleThreadsafe(IPayloadContext context) {
     FluidContainerTransferManager.INSTANCE.setContainerItems(items);
   }
 }
+

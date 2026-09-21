@@ -40,6 +40,7 @@ public class IntLoadable implements Loadable<Integer> {
   /** Method of writing to the network */
   private final IntNetwork network;
 
+
   /** Creates a loadable with defaulting networking */
   public static IntLoadable range(int min, int max) {
     return new IntLoadable(min, max, IntNetwork.recommended(min, max));

@@ -12,12 +12,12 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.client.event.RenderGuiOverlayEvent;
-import net.minecraftforge.client.gui.overlay.ForgeGui;
-import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
+import net.minecraft.client.gui.Gui;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
 import slimeknights.mantle.Mantle;
 import slimeknights.mantle.config.Config;
 import slimeknights.mantle.config.Config.HeartRenderer;
@@ -25,8 +25,8 @@ import slimeknights.mantle.config.Config.HeartRenderer;
 import java.util.Random;
 
 public class ExtraHeartRenderHandler {
-  private static final ResourceLocation ICON_HEARTS = new ResourceLocation(Mantle.modId, "textures/gui/extra_hearts.png");
-  private static final ResourceLocation ICON_VANILLA = Gui.GUI_ICONS_LOCATION;
+  private static final ResourceLocation ICON_HEARTS = ResourceLocation.fromNamespaceAndPath(Mantle.modId, "textures/gui/extra_hearts.png");
+  private static final ResourceLocation ICON_VANILLA = net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/gui/icons.png");
   /** Number of heart color variants */
   private static final int HEART_VARIANTS = 12;
   /** Number of heart color variants */
@@ -80,20 +80,19 @@ public class ExtraHeartRenderHandler {
    * @param event  Event instance
    */
   @SubscribeEvent(priority = EventPriority.LOW)
-  public void renderHealthbar(RenderGuiOverlayEvent.Pre event) {
+  public void renderHealthbar(RenderGuiLayerEvent.Pre event) {
     HeartRenderer renderer = Config.HEART_RENDERER.get();
-    if (renderer == HeartRenderer.DISABLE || event.isCanceled() || event.getOverlay() != VanillaGuiOverlay.PLAYER_HEALTH.type()) {
+    if (renderer == HeartRenderer.DISABLE || event.isCanceled() || event.getName() != VanillaGuiLayers.PLAYER_HEALTH) {
       return;
     }
     // ensure its visible
-    if (!(mc.gui instanceof ForgeGui gui) || mc.options.hideGui || !gui.shouldDrawSurvivalElements()) {
+    if (mc.options.hideGui || !mc.gameMode.canHurtPlayer()) {
       return;
     }
     Entity renderViewEnity = this.mc.getCameraEntity();
     if (!(renderViewEnity instanceof Player player)) {
       return;
     }
-    gui.setupOverlayRenderState(true, false);
 
     this.mc.getProfiler().push("health");
 
@@ -124,7 +123,7 @@ public class ExtraHeartRenderHandler {
     // setup window size
     Window window = this.mc.getWindow();
     int left = window.getGuiScaledWidth() / 2 - 91;
-    int top = window.getGuiScaledHeight() - gui.leftHeight;
+    int top = window.getGuiScaledHeight() - 39;
 
     // grab max health as the max of it or the health we will display
     // cap it to 20, as this just determines heart count
@@ -222,16 +221,12 @@ public class ExtraHeartRenderHandler {
 
     // prepare the GUI for the event
     RenderSystem.setShaderTexture(0, ICON_VANILLA);
-    gui.leftHeight += ROW_HEIGHT;
-    if (!compactAbsorption && absorb > 0) {
-      gui.leftHeight += absorptionOffset;
-    }
 
     event.setCanceled(true);
     RenderSystem.disableBlend();
     this.mc.getProfiler().pop();
     //noinspection UnstableApiUsage  I do what I want (more accurately, we override the renderer but want to let others still respond in post)
-    MinecraftForge.EVENT_BUS.post(new RenderGuiOverlayEvent.Post(event.getWindow(), graphics, event.getPartialTick(), VanillaGuiOverlay.PLAYER_HEALTH.type()));
+    // NeoForge.EVENT_BUS.post(new RenderGuiLayerEvent.Post(event.getWindow(), graphics, event.getPartialTick(), VanillaGuiLayers.PLAYER_HEALTH));
   }
 
   /** Computes the color U offset for a given heart index */

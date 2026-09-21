@@ -26,7 +26,7 @@ public record GsonLoadable<T>(Gson gson, Class<T> classType) implements Loadable
 
   @Override
   public T decode(FriendlyByteBuf buffer, TypedMap context) {
-    CompoundTag tag = buffer.readAnySizeNbt();
+    Tag tag = (Tag)buffer.readNbt();
     if (tag != null) {
       return gson.fromJson(NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, tag), classType);
     }
@@ -35,12 +35,7 @@ public record GsonLoadable<T>(Gson gson, Class<T> classType) implements Loadable
 
   @Override
   public void encode(FriendlyByteBuf buffer, T object) {
-    // TODO: do we need to support lists here? probably not as loadable gives us lists
     Tag tag = JsonOps.INSTANCE.convertTo(NbtOps.INSTANCE, gson.toJsonTree(object, classType));
-    if (tag.getId() == Tag.TAG_COMPOUND) {
-      buffer.writeNbt((CompoundTag)tag);
-    } else {
-      throw new EncoderException("Serialized wrong NBT tag type " + tag);
-    }
+    buffer.writeNbt(tag);
   }
 }

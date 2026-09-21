@@ -328,9 +328,12 @@ public record BlockPropertiesPredicate(Block block, List<Matcher> properties) im
     return new Builder(block);
   }
 
-  @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
   public static class Builder {
     private final Block block;
+
+    private Builder(Block block) {
+      this.block = block;
+    }
     private final Map<Property<?>, Matcher> matchers = new LinkedHashMap<>();
 
     /** Adds a matcher to the builder */

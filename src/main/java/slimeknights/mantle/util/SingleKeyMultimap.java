@@ -237,9 +237,13 @@ public class SingleKeyMultimap<K,V> implements Multimap<K,V> {
     }
   }
 
-  @AllArgsConstructor
+  // @AllArgsConstructor
   private class SingleKeyEntry implements Entry<K,V> {
     private V value;
+
+    public SingleKeyEntry(V value) {
+      this.value = value;
+    }
 
     @Override
     public K getKey() {

@@ -15,23 +15,28 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.fluids.FluidType;
+import net.neoforged.neoforge.fluids.FluidType;
 import org.jetbrains.annotations.Nullable;
 import slimeknights.mantle.registration.FluidBuilder;
 
 import java.util.function.Supplier;
 
 /** Fluid with a bucket form, but no block form (hence no flowing) */
-@AllArgsConstructor
 public class UnplaceableFluid extends Fluid {
   /** Forge fluid attributes builder */
   private final Supplier<? extends FluidType> type;
   /** Bucket form of the liquid, use a supplier to air if no bucket form */
   @Nullable
   private final Supplier<? extends Item> bucket;
-  @Getter
   private final float explosionResistance;
   private final int tickRate;
+
+  public UnplaceableFluid(Supplier<? extends FluidType> type, @Nullable Supplier<? extends Item> bucket, float explosionResistance, int tickRate) {
+    this.type = type;
+    this.bucket = bucket;
+    this.explosionResistance = explosionResistance;
+    this.tickRate = tickRate;
+  }
 
   public UnplaceableFluid(FluidBuilder<?> builder) {
     type = builder.getType();
@@ -57,6 +62,11 @@ public class UnplaceableFluid extends Fluid {
       return Items.AIR;
     }
     return bucket.get();
+  }
+
+  @Override
+  public float getExplosionResistance() {
+    return explosionResistance;
   }
 
   @Override
@@ -107,3 +117,4 @@ public class UnplaceableFluid extends Fluid {
     return Shapes.block();
   }
 }
+

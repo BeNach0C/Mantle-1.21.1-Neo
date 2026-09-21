@@ -6,8 +6,8 @@ import lombok.RequiredArgsConstructor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.fluids.FluidType;
-import net.minecraftforge.fluids.ForgeFlowingFluid;
+import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
@@ -19,6 +19,10 @@ import java.util.function.Supplier;
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class FluidBuilder<T extends FluidBuilder<T>> {
   protected Supplier<? extends FluidType> type;
+
+  public Supplier<? extends FluidType> getType() {
+    return type;
+  }
   @Nullable
   protected Supplier<? extends Item> bucket;
   @Nullable
@@ -27,6 +31,13 @@ public class FluidBuilder<T extends FluidBuilder<T>> {
   private int levelDecreasePerBlock = 1;
   private float explosionResistance = 1;
   private int tickRate = 5;
+
+  public Supplier<? extends Item> getBucket() { return bucket; }
+  public Supplier<? extends LiquidBlock> getBlock() { return block; }
+  public int getSlopeFindDistance() { return slopeFindDistance; }
+  public int getLevelDecreasePerBlock() { return levelDecreasePerBlock; }
+  public float getExplosionResistance() { return explosionResistance; }
+  public int getTickRate() { return tickRate; }
 
   /** Creates a new builder instance */
   public static FluidBuilder<?> create(Supplier<? extends FluidType> type) {
@@ -86,8 +97,8 @@ public class FluidBuilder<T extends FluidBuilder<T>> {
    * @param flowing  Flowing supplier
    * @return  Forge fluid properties
    */
-  public ForgeFlowingFluid.Properties build(Supplier<? extends FluidType> type, Supplier<? extends Fluid> still, Supplier<? extends Fluid> flowing) {
-    return new ForgeFlowingFluid.Properties(type, still, flowing)
+  public BaseFlowingFluid.Properties build(Supplier<? extends FluidType> type, Supplier<? extends Fluid> still, Supplier<? extends Fluid> flowing) {
+    return new BaseFlowingFluid.Properties(type, still, flowing)
         .slopeFindDistance(this.slopeFindDistance)
         .levelDecreasePerBlock(this.levelDecreasePerBlock)
         .explosionResistance(this.explosionResistance)

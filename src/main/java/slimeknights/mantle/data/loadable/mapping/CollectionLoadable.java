@@ -15,12 +15,17 @@ import java.util.List;
 
 /** Shared base class for a loadable of a collection of elements */
 @SuppressWarnings("unused") // API
-@RequiredArgsConstructor
+
 public abstract class CollectionLoadable<T,C extends Collection<T>> implements ArrayLoadable<C> {
   /** Loadable for an object */
   protected final Loadable<T> base;
   /** Minimum list size allowed */
   private final int minSize;
+
+  public CollectionLoadable(Loadable<T> base, int minSize) {
+    this.base = base;
+    this.minSize = minSize;
+  }
 
   /** Creates a new builder instance for the given expected size */
   protected Collection<T> createBuilder(int size) {

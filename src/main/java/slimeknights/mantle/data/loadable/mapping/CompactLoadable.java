@@ -21,6 +21,7 @@ public class CompactLoadable<T> implements Loadable<T> {
   private final Loadable<T> compact;
   private final Predicate<T> compactCondition;
 
+
   /**
    * Creates a new instance for a general loadable
    * @param loadable          Base loadable, used under most circumstances

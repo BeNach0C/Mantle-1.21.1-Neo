@@ -29,15 +29,21 @@ public class GenericLoaderRegistry<T extends IHaveLoader> implements RecordLoada
   protected static final JsonObject EMPTY_OBJECT = new JsonObject();
 
   /** Display name for this registry */
-  @Getter
   private final String name;
+
+  public String getName() {
+    return name;
+  }
   /** Map of all serializers for implementations */
   protected final NamedComponentRegistry<RecordLoadable<? extends T>> loaders;
   /** If true, single key serializations will not use a JSON object to serialize, ideal for loaders with many singletons */
   protected final boolean compact;
   /** Loader that chooses between two options based on a load condition. Exposed for datagen. */
-  @Getter
   private final RecordLoadable<T> conditionalLoader;
+
+  public RecordLoadable<T> getConditionalLoader() {
+    return conditionalLoader;
+  }
 
   /**
    * Creates a new registry instance

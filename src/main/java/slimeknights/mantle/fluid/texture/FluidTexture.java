@@ -10,8 +10,8 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
-import net.minecraftforge.fluids.FluidType;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.fluids.FluidType;
+import net.minecraft.core.registries.BuiltInRegistries;
 import slimeknights.mantle.client.model.TextureColorHelper;
 import slimeknights.mantle.data.loadable.common.ColorLoadable;
 import slimeknights.mantle.data.loadable.primitive.EnumLoadable;
@@ -21,9 +21,6 @@ import javax.annotation.Nullable;
 import java.util.Objects;
 
 /** Record representing a fluid texture */
-@Accessors(fluent = true)
-@Data
-@AllArgsConstructor
 public final class FluidTexture {
   private static final EnumLoadable<FogShape> FOG_SHAPE_LOADABLE = new EnumLoadable<>(FogShape.class);
 
@@ -42,6 +39,30 @@ public final class FluidTexture {
   private final FogShape fogShape;
   private final float fogStart;
   private final float fogEnd;
+
+  public FluidTexture(ResourceLocation still, ResourceLocation flowing, @Nullable ResourceLocation overlay, @Nullable ResourceLocation camera, float cameraOpacity, int color, int fogColor, boolean calculateFogColor, @Nullable FogShape fogShape, float fogStart, float fogEnd) {
+    this.still = still;
+    this.flowing = flowing;
+    this.overlay = overlay;
+    this.camera = camera;
+    this.cameraOpacity = cameraOpacity;
+    this.color = color;
+    this.fogColor = fogColor;
+    this.calculateFogColor = calculateFogColor;
+    this.fogShape = fogShape;
+    this.fogStart = fogStart;
+    this.fogEnd = fogEnd;
+  }
+
+  public ResourceLocation still() { return still; }
+  public ResourceLocation flowing() { return flowing; }
+  @Nullable public ResourceLocation overlay() { return overlay; }
+  @Nullable public ResourceLocation camera() { return camera; }
+  public float cameraOpacity() { return cameraOpacity; }
+  public int color() { return color; }
+  @Nullable public FogShape fogShape() { return fogShape; }
+  public float fogStart() { return fogStart; }
+  public float fogEnd() { return fogEnd; }
 
   /** @deprecated use {@link #FluidTexture(ResourceLocation, ResourceLocation, ResourceLocation, ResourceLocation, float, int, int, boolean, FogShape, float, float)} */
   @Deprecated(forRemoval = true)
@@ -132,10 +153,6 @@ public final class FluidTexture {
   /**
    * Builder for this object
    */
-  @SuppressWarnings("unused") // API
-  @Setter
-  @Accessors(fluent = true)
-  @RequiredArgsConstructor
   public static class Builder {
 
     private final FluidType fluid;
@@ -158,6 +175,23 @@ public final class FluidTexture {
     private float fogStart = 0.25f;
     private float fogEnd = 1;
 
+    public Builder(FluidType fluid) {
+      this.fluid = fluid;
+    }
+
+    public Builder root(ResourceLocation root) { this.root = root; return this; }
+    public Builder still(ResourceLocation still) { this.still = still; return this; }
+    public Builder flowing(ResourceLocation flowing) { this.flowing = flowing; return this; }
+    public Builder overlay(ResourceLocation overlay) { this.overlay = overlay; return this; }
+    public Builder camera(ResourceLocation camera) { this.camera = camera; return this; }
+    public Builder cameraOpacity(float cameraOpacity) { this.cameraOpacity = cameraOpacity; return this; }
+    public Builder color(int color) { this.color = color; return this; }
+    public Builder fogColor(int fogColor) { this.fogColor = fogColor; return this; }
+    public Builder calculateFogColor(boolean calculateFogColor) { this.calculateFogColor = calculateFogColor; return this; }
+    public Builder fogShape(FogShape fogShape) { this.fogShape = fogShape; return this; }
+    public Builder fogStart(float fogStart) { this.fogStart = fogStart; return this; }
+    public Builder fogEnd(float fogEnd) { this.fogEnd = fogEnd; return this; }
+
     /**
      * Adds textures using the fluid registry ID
      *
@@ -168,7 +202,7 @@ public final class FluidTexture {
      * @return Builder instance
      */
     public Builder wrapId(String prefix, String suffix, boolean overlay, boolean camera) {
-      return textures(JsonHelper.wrap(Objects.requireNonNull(ForgeRegistries.FLUID_TYPES.get().getKey(fluid)), prefix, suffix), overlay, camera);
+      return this.textures(JsonHelper.wrap(Objects.requireNonNull(net.neoforged.neoforge.registries.NeoForgeRegistries.FLUID_TYPES.getKey(fluid)), prefix, suffix), overlay, camera);
     }
 
     /**
@@ -178,7 +212,7 @@ public final class FluidTexture {
       if (root == null) {
         throw new IllegalStateException("Automatic still texture requires root to be set");
       }
-      return still(root.withSuffix("still"));
+      return this.still(root.withSuffix("still"));
     }
 
     /**
@@ -188,7 +222,7 @@ public final class FluidTexture {
       if (root == null) {
         throw new IllegalStateException("Automatic flowing texture requires root to be set");
       }
-      return flowing(root.withSuffix("flowing"));
+      return this.flowing(root.withSuffix("flowing"));
     }
 
     /**
@@ -198,7 +232,7 @@ public final class FluidTexture {
       if (root == null) {
         throw new IllegalStateException("Automatic overlay texture requires root to be set");
       }
-      return overlay(root.withSuffix("overlay"));
+      return this.overlay(root.withSuffix("overlay"));
     }
 
     /**
@@ -208,7 +242,7 @@ public final class FluidTexture {
       if (root == null) {
         throw new IllegalStateException("Automatic camera texture requires root to be set");
       }
-      return camera(root.withSuffix("camera"));
+      return this.camera(root.withSuffix("camera"));
     }
 
     /**
@@ -222,19 +256,19 @@ public final class FluidTexture {
      */
     @Deprecated
     public Builder textures(ResourceLocation path, boolean overlay, boolean camera) {
-      root(path).still().flowing();
+      this.root(path).still().flowing();
       if (overlay) {
-        overlay();
+        this.overlay();
       }
       if (camera) {
-        camera();
+        this.camera();
       }
       return this;
     }
 
     /** Sets all 3 fog properties */
     public Builder fog(FogShape shape, float start, float end) {
-      return fogShape(shape).fogStart(start).fogEnd(end);
+      return this.fogShape(shape).fogStart(start).fogEnd(end);
     }
 
     /**
@@ -280,3 +314,4 @@ public final class FluidTexture {
     }
   }
 }
+

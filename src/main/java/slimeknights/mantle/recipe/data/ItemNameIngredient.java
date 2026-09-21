@@ -7,10 +7,7 @@ import lombok.RequiredArgsConstructor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraftforge.common.crafting.AbstractIngredient;
-import net.minecraftforge.common.crafting.IIngredientSerializer;
-import net.minecraftforge.common.crafting.VanillaIngredientSerializer;
-
+import net.neoforged.neoforge.common.crafting.ICustomIngredient;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,10 +16,9 @@ import java.util.List;
 /**
  * Ingredient for a non-NBT sensitive item from another mod, should never be used outside datagen
  */
-public class ItemNameIngredient extends AbstractIngredient {
+public class ItemNameIngredient implements ICustomIngredient {
   private final List<ResourceLocation> names;
   protected ItemNameIngredient(List<ResourceLocation> names) {
-    super(names.stream().map(NamedValue::new));
     this.names = names;
   }
 
@@ -36,8 +32,11 @@ public class ItemNameIngredient extends AbstractIngredient {
     return from(Arrays.asList(names));
   }
 
-  @Override
-  public boolean test(@Nullable ItemStack stack) {
+  public boolean test(ItemStack stack) {
+    throw new UnsupportedOperationException();
+  }
+
+  public java.util.stream.Stream<ItemStack> getItems() {
     throw new UnsupportedOperationException();
   }
 
@@ -48,7 +47,6 @@ public class ItemNameIngredient extends AbstractIngredient {
     return json;
   }
 
-  @Override
   public JsonElement toJson() {
     if (names.size() == 1) {
       return forName(names.get(0));
@@ -60,26 +58,22 @@ public class ItemNameIngredient extends AbstractIngredient {
     return array;
   }
 
-  @Override
   public boolean isSimple() {
     return false;
   }
 
-  @Override
-  public IIngredientSerializer<? extends Ingredient> getSerializer() {
-    return VanillaIngredientSerializer.INSTANCE;
+  public net.neoforged.neoforge.common.crafting.IngredientType<?> getType() {
+    throw new UnsupportedOperationException();
   }
 
   @RequiredArgsConstructor
-  public static class NamedValue implements Ingredient.Value {
+  public static class NamedValue {
     private final ResourceLocation name;
 
-    @Override
     public Collection<ItemStack> getItems() {
       throw new UnsupportedOperationException();
     }
 
-    @Override
     public JsonObject serialize() {
       JsonObject json = new JsonObject();
       json.addProperty("item", name.toString());
@@ -87,3 +81,4 @@ public class ItemNameIngredient extends AbstractIngredient {
     }
   }
 }
+

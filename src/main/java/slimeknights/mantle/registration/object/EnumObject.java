@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
  * @param <I>  Entry type
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class EnumObject<T extends Enum<T>, I> implements MultiObject<I> {
   /** Singleton empty object, type does not matter as it has no items */
   @SuppressWarnings({"rawtypes", "unchecked"})
@@ -31,6 +30,10 @@ public class EnumObject<T extends Enum<T>, I> implements MultiObject<I> {
 
   /** Internal backing supplier map */
   private final Map<T,Supplier<? extends I>> map;
+
+  protected EnumObject(Map<T, Supplier<? extends I>> map) {
+    this.map = map;
+  }
 
   /**
    * Gets a entry supplier for the given value
@@ -95,7 +98,7 @@ public class EnumObject<T extends Enum<T>, I> implements MultiObject<I> {
   }
 
   /**
-   * Gets a list of values in this enum object. Will error if a {@link net.minecraftforge.registries.RegistryObject} cannot be resolved, unlike {@link #forEach(Consumer)}
+   * Gets a list of values in this enum object. Will error if a {@link net.neoforged.neoforge.registries.RegistryObject} cannot be resolved, unlike {@link #forEach(Consumer)}
    * @return  List of values in the object
    */
   @Override
@@ -209,3 +212,4 @@ public class EnumObject<T extends Enum<T>, I> implements MultiObject<I> {
     }
   }
 }
+

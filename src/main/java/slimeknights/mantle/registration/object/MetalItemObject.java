@@ -37,6 +37,11 @@ public class MetalItemObject extends ItemObject<Block> implements MultiObject<It
     this.nuggetTag = getTag("nuggets/" + tagName);
   }
 
+  public TagKey<Block> getBlockTag() { return blockTag; }
+  public TagKey<Item> getBlockItemTag() { return blockItemTag; }
+  public TagKey<Item> getIngotTag() { return ingotTag; }
+  public TagKey<Item> getNuggetTag() { return nuggetTag; }
+
   /** Gets the ingot for this object */
   public Item getIngot() {
     return ingot.get();

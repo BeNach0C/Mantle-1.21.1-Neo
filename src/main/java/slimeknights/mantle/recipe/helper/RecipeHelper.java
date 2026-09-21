@@ -36,7 +36,7 @@ public class RecipeHelper {
    * @return  Optional of the recipe, or empty if the recipe is missing
    */
   public static <C extends Recipe<?>> Optional<C> getRecipe(RecipeManager manager, ResourceLocation name, Class<C> clazz) {
-    return manager.byKey(name).filter(clazz::isInstance).map(clazz::cast);
+    return manager.byKey(name).map(net.minecraft.world.item.crafting.RecipeHolder::value).filter(clazz::isInstance).map(clazz::cast);
   }
 
   /**
@@ -49,8 +49,9 @@ public class RecipeHelper {
    * @param <C>  Return type
    * @return  List of recipes from the manager
    */
-  public static <I extends Container, T extends Recipe<I>, C extends T> List<C> getRecipes(RecipeManager manager, RecipeType<T> type, Class<C> clazz) {
-    return manager.byType(type).values().stream()
+  public static <I extends net.minecraft.world.item.crafting.RecipeInput, T extends Recipe<I>, C extends T> List<C> getRecipes(RecipeManager manager, RecipeType<T> type, Class<C> clazz) {
+    return manager.getAllRecipesFor(type).stream()
+                  .map(net.minecraft.world.item.crafting.RecipeHolder::value)
                   .filter(clazz::isInstance)
                   .map(clazz::cast)
                   .collect(Collectors.toList());
@@ -67,12 +68,12 @@ public class RecipeHelper {
    * @param <C>  Return type
    * @return  Recipe list
    */
-  public static <I extends Container, T extends Recipe<I>, C extends T> List<C> getUIRecipes(RecipeManager manager, RecipeType<T> type, Class<C> clazz, Predicate<? super C> filter) {
-    return manager.byType(type).values().stream()
-                  .filter(clazz::isInstance)
-                  .map(clazz::cast)
-                  .filter(filter)
-                  .sorted(Comparator.comparing(Recipe::getId))
+  public static <I extends net.minecraft.world.item.crafting.RecipeInput, T extends Recipe<I>, C extends T> List<C> getUIRecipes(RecipeManager manager, RecipeType<T> type, Class<C> clazz, Predicate<? super C> filter) {
+    return manager.getAllRecipesFor(type).stream()
+                  .filter(h -> clazz.isInstance(h.value()))
+                  .filter(h -> filter.test(clazz.cast(h.value())))
+                  .sorted(Comparator.comparing(net.minecraft.world.item.crafting.RecipeHolder::id))
+                  .map(h -> clazz.cast(h.value()))
                   .collect(Collectors.toList());
   }
 
@@ -84,30 +85,30 @@ public class RecipeHelper {
    * @param clazz    Preferred recipe class type
    * @return  List of flattened recipes from the manager
    */
-  public static <C> List<C> getJEIRecipes(RegistryAccess access, Stream<? extends Recipe<?>> recipes, Class<C> clazz) {
+  public static <C> List<C> getJEIRecipes(RegistryAccess access, Stream<? extends net.minecraft.world.item.crafting.RecipeHolder<?>> recipes, Class<C> clazz) {
     return recipes
         .sorted((r1, r2) -> {
           // if one is multi, and the other not, the multi recipe is larger
-          boolean m1 = r1 instanceof IMultiRecipe<?>;
-          boolean m2 = r2 instanceof IMultiRecipe<?>;
+          boolean m1 = r1.value() instanceof IMultiRecipe<?>;
+          boolean m2 = r2.value() instanceof IMultiRecipe<?>;
           if (m1 && !m2) return 1;
           if (!m1 && m2) return -1;
           // fall back to recipe ID
-          return r1.getId().compareTo(r2.getId());
+          return r1.id().compareTo(r2.id());
         })
         .flatMap((recipe) -> {
           // if its a multi recipe, extract child recipes and stream those
-          if (recipe instanceof IMultiRecipe<?>) {
+          if (recipe.value() instanceof IMultiRecipe<?>) {
             // most multiregistries iterate some external registry to list their contents
             // sometimes people do dumb things and register broken objects, so best to avoid breaking the rest of the JEI plugin
             try {
-              return ((IMultiRecipe<?>) recipe).getRecipes(access).stream();
+              return ((IMultiRecipe<?>) recipe.value()).getRecipes(access).stream();
             } catch (Exception e) {
-              Mantle.logger.error("Failed to fetch JEI recipes for multi recipe {} ({})", recipe.getId(), recipe, e);
+              Mantle.logger.error("Failed to fetch JEI recipes for multi recipe {} ({})", recipe.id(), recipe.value(), e);
               return Stream.empty();
             }
           }
-          return Stream.of(recipe);
+          return Stream.of(recipe.value());
         })
         .filter(clazz::isInstance)
         .map(clazz::cast)
@@ -123,7 +124,9 @@ public class RecipeHelper {
    * @param clazz    Preferred recipe class type
    * @return  List of flattened recipes from the manager
    */
-  public static <I extends Container, T extends Recipe<I>, C> List<C> getJEIRecipes(RegistryAccess access, RecipeManager manager, RecipeType<T> type, Class<C> clazz) {
-    return getJEIRecipes(access, manager.byType(type).values().stream(), clazz);
+  public static <I extends net.minecraft.world.item.crafting.RecipeInput, T extends Recipe<I>, C> List<C> getJEIRecipes(RegistryAccess access, RecipeManager manager, RecipeType<T> type, Class<C> clazz) {
+    return getJEIRecipes(access, manager.getAllRecipesFor(type).stream(), clazz);
   }
 }
+
+

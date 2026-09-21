@@ -13,6 +13,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickAction;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
@@ -40,7 +41,11 @@ public abstract class AbstractBookItem extends LecternBookItem {
   /** Checks if the given menu supports opening the menu */
   public static boolean isValidContainer(AbstractContainerMenu menu) {
     // player inventory has a null type, which throws when used through the getter
-    if (menu.menuType == null) {
+    try {
+      if (menu.getType() == null) {
+        return true;
+      }
+    } catch (UnsupportedOperationException e) {
       return true;
     }
     // because vanilla set the throw precedent, add protection for other cases, just in case
@@ -54,9 +59,9 @@ public abstract class AbstractBookItem extends LecternBookItem {
   }
 
   @Override
-  public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag flag) {
+  public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
     // if the stack is in the player inventory, show the right click to open tooltip
-    if (world != null && world.isClientSide) {
+    if (context != null && context.level() != null && context.level().isClientSide()) {
       Player player = SafeClientAccess.getPlayer();
       if (player != null && isValidContainer(player.containerMenu)) {
         Inventory inventory = player.getInventory();
@@ -65,7 +70,7 @@ public abstract class AbstractBookItem extends LecternBookItem {
         }
       }
     }
-    super.appendHoverText(stack, world, tooltip, flag);
+    super.appendHoverText(stack, context, tooltip, flag);
   }
 
   /** Called on the client to open the screen when used on right click in the hand */

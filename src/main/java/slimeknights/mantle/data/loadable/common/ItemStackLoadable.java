@@ -42,7 +42,7 @@ public class ItemStackLoadable {
   /** Field for item stack count that allows empty */
   private static final LoadableField<Integer,ItemStack> COUNT = IntLoadable.FROM_ZERO.defaultField("count", 1, true, ItemStack::getCount);
   /** Field for item stack count that allows empty */
-  private static final LoadableField<CompoundTag,ItemStack> NBT = NBTLoadable.ALLOW_STRING.nullableField("nbt", ItemStack::getTag);
+  private static final LoadableField<CompoundTag,ItemStack> NBT = NBTLoadable.ALLOW_STRING.nullableField("nbt", s -> null);
 
 
   /* Optional */
@@ -76,7 +76,7 @@ public class ItemStackLoadable {
     }
     ItemStack stack = new ItemStack(item, count);
     if (nbt != null) {
-      stack.setTag(nbt);
+      // stack.setTag(nbt);
     }
     return stack;
   }
@@ -132,7 +132,7 @@ public class ItemStackLoadable {
 
     @Override
     public JsonElement serialize(ItemStack stack) {
-      if ((this == FIXED_COUNT || stack.getCount() == 1) && !stack.hasTag()) {
+      if ((this == FIXED_COUNT || stack.getCount() == 1) && stack.getComponents().isEmpty()) {
         return OPTIONAL_ITEM.serialize(stack);
       }
       return RecordLoadable.super.serialize(stack);
@@ -155,7 +155,7 @@ public class ItemStackLoadable {
         return ItemStack.EMPTY;
       }
       ItemStack stack = new ItemStack(item, count);
-      stack.readShareTag(nbt);
+      // stack.readShareTag(nbt);
       return stack;
     }
 
@@ -165,7 +165,7 @@ public class ItemStackLoadable {
       if (this == READ_COUNT) {
         COUNT.encode(buffer, stack);
       }
-      buffer.writeNbt(stack.getShareTag());
+      buffer.writeNbt(null);
     }
   }
 }

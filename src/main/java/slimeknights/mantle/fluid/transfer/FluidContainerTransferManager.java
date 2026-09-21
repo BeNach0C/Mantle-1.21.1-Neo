@@ -15,13 +15,13 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.crafting.CraftingHelper;
-import net.minecraftforge.common.crafting.conditions.ICondition.IContext;
-import net.minecraftforge.event.AddReloadListenerEvent;
-import net.minecraftforge.event.OnDatapackSyncEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.crafting.CraftingHelper;
+import net.neoforged.neoforge.common.conditions.ICondition.IContext;
+import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.OnDatapackSyncEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.neoforge.fluids.FluidStack;
 import slimeknights.mantle.data.gson.GenericRegisteredSerializer;
 import slimeknights.mantle.network.MantleNetwork;
 import slimeknights.mantle.util.JsonHelper;
@@ -35,9 +35,13 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /** Logic for filling and emptying fluid containers that are not fluid handlers */
-@Log4j2
 public class FluidContainerTransferManager extends SimpleJsonResourceReloadListener {
+  private static final Logger log = LogManager.getLogger();
+  
   /** Map of all modifier types that are expected to load in data packs */
   public static final GenericRegisteredSerializer<IFluidContainerTransfer> TRANSFER_LOADERS = new GenericRegisteredSerializer<>();
   /** Folder for saving the logic */
@@ -56,8 +60,11 @@ public class FluidContainerTransferManager extends SimpleJsonResourceReloadListe
   private List<IFluidContainerTransfer> transfers = Collections.emptyList();
 
   /** Set of all items that match a recipe, exists on both sides */
-  @Setter @Nullable
   private Set<Item> containerItems = Collections.emptySet();
+
+  public void setContainerItems(@Nullable Set<Item> containerItems) {
+    this.containerItems = containerItems;
+  }
 
   /** Condition context for tags */
   private IContext context = IContext.EMPTY;
@@ -81,18 +88,18 @@ public class FluidContainerTransferManager extends SimpleJsonResourceReloadListe
 
   /** For internal use only */
   public void init() {
-    MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, AddReloadListenerEvent.class, e -> {
+    NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, AddReloadListenerEvent.class, e -> {
       e.addListener(this);
       this.context = e.getConditionContext();
     });
-    MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, OnDatapackSyncEvent.class, e -> JsonHelper.syncPackets(e, MantleNetwork.INSTANCE, new FluidContainerTransferPacket(this.getContainerItems())));
+    NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, OnDatapackSyncEvent.class, e -> JsonHelper.syncPackets(e, MantleNetwork.INSTANCE, new FluidContainerTransferPacket(this.getContainerItems())));
   }
 
   /** Loads transfer from JSON */
   @Nullable
   private IFluidContainerTransfer loadFluidTransfer(ResourceLocation key, JsonObject json) {
     try {
-      if (!json.has("conditions") || CraftingHelper.processConditions(GsonHelper.getAsJsonArray(json, "conditions"), context)) {
+      if (!json.has("conditions") || net.neoforged.neoforge.common.conditions.ICondition.CODEC.listOf().parse(com.mojang.serialization.JsonOps.INSTANCE, net.minecraft.util.GsonHelper.getAsJsonArray(json, "conditions")).getOrThrow().stream().allMatch(c -> c.test(context))) {
         return GSON.fromJson(json, IFluidContainerTransfer.class);
       }
     } catch (JsonSyntaxException e) {
@@ -141,3 +148,5 @@ public class FluidContainerTransferManager extends SimpleJsonResourceReloadListe
     return null;
   }
 }
+
+

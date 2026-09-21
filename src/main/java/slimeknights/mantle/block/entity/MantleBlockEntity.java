@@ -44,7 +44,6 @@ public class MantleBlockEntity extends BlockEntity {
     return false;
   }
 
-  @Override
   @Nullable
   public ClientboundBlockEntityDataPacket getUpdatePacket() {
     // number is just used for vanilla, -1 ensures it skips all instanceof checks as its not a vanilla TE
@@ -57,7 +56,6 @@ public class MantleBlockEntity extends BlockEntity {
    */
   protected void saveSynced(CompoundTag nbt) {}
 
-  @Override
   public CompoundTag getUpdateTag() {
     CompoundTag nbt = new CompoundTag();
     saveSynced(nbt);
@@ -65,8 +63,8 @@ public class MantleBlockEntity extends BlockEntity {
   }
 
   @Override
-  public void saveAdditional(CompoundTag nbt) {
-    super.saveAdditional(nbt);
+  protected void saveAdditional(CompoundTag nbt, net.minecraft.core.HolderLookup.Provider provider) {
+    super.saveAdditional(nbt, provider);
     saveSynced(nbt);
   }
 }

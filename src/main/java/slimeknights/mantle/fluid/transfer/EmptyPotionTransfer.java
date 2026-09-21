@@ -4,11 +4,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 import slimeknights.mantle.Mantle;
 import slimeknights.mantle.data.loadable.common.IngredientLoadable;
 import slimeknights.mantle.data.loadable.primitive.IntLoadable;
@@ -32,22 +31,31 @@ public class EmptyPotionTransfer extends EmptyFluidContainerTransfer {
     super(input, filled, FluidOutput.fromFluid(Fluids.WATER, amount));
   }
 
+  private boolean isWater(ItemStack stack) {
+    net.minecraft.world.item.alchemy.PotionContents contents = stack.getOrDefault(net.minecraft.core.component.DataComponents.POTION_CONTENTS, net.minecraft.world.item.alchemy.PotionContents.EMPTY);
+    return contents.is(Potions.WATER);
+  }
+
   @Override
   public boolean matches(ItemStack stack, FluidStack fluid) {
     // to match, must either have water in the stack, or a potion fluid
     return super.matches(stack, fluid)
-      && (TagPreference.getPreference(MantleTags.Fluids.POTION).isPresent() || PotionUtils.getPotion(stack) == Potions.WATER);
+      && (TagPreference.getPreference(MantleTags.Fluids.POTION).isPresent() || isWater(stack));
   }
 
   @Override
   protected FluidStack getFluid(ItemStack stack) {
     // water just returns water
-    if (PotionUtils.getPotion(stack) == Potions.WATER) {
-      return fluid.copy();
+    if (isWater(stack)) {
+      return fluid.get().copy();
     }
     // if it's not water, we need a potion fluid to return anything
     return TagPreference.getPreference(MantleTags.Fluids.POTION)
-      .map(value -> new FluidStack(value, fluid.getAmount(), stack.getTag()))
+      .map(value -> {
+          FluidStack result = new FluidStack(value, fluid.get().getAmount());
+          result.applyComponents(stack.getComponentsPatch());
+          return result;
+      })
       .orElse(FluidStack.EMPTY);
   }
 
@@ -59,3 +67,4 @@ public class EmptyPotionTransfer extends EmptyFluidContainerTransfer {
     return json;
   }
 }
+

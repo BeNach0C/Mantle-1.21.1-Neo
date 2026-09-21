@@ -24,14 +24,16 @@ import slimeknights.mantle.recipe.helper.LoadableRecipeSerializer;
 public class SmeltingResultRecipe extends SmeltingRecipe implements CookingResultRecipe {
   public static LoadableField<Integer, AbstractCookingRecipe> COOKING_TIME_FIELD = IntLoadable.FROM_ONE.defaultField("cooking_time", 200, true, AbstractCookingRecipe::getCookingTime);
   public static final RecordLoadable<SmeltingResultRecipe> LOADABLE = RecordLoadable.create(
-    ContextKey.ID.requiredField(), LoadableRecipeSerializer.RECIPE_GROUP, CookingResultRecipe.CATEGORY_FIELD,
-    IngredientLoadable.DISALLOW_EMPTY.requiredField("ingredient", r -> r.ingredient),
+    LoadableRecipeSerializer.RECIPE_GROUP, CookingResultRecipe.CATEGORY_FIELD,
+    IngredientLoadable.DISALLOW_EMPTY.requiredField("ingredient", r -> r.getIngredients().get(0)),
     RESULT_FIELD, EXPERIENCE_FIELD, COOKING_TIME_FIELD,
     SmeltingResultRecipe::new);
 
   private final ItemOutput result;
-  public SmeltingResultRecipe(ResourceLocation id, String group, CookingBookCategory category, Ingredient ingredient, ItemOutput result, float experience, int cookingTime) {
-    super(id, group, category, ingredient, ItemStack.EMPTY, experience, cookingTime);
+  @Override
+  public ItemOutput getResult() { return result; }
+  public SmeltingResultRecipe(String group, CookingBookCategory category, Ingredient ingredient, ItemOutput result, float experience, int cookingTime) {
+    super(group, category, ingredient, ItemStack.EMPTY, experience, cookingTime);
     this.result = result;
   }
 
@@ -41,12 +43,13 @@ public class SmeltingResultRecipe extends SmeltingRecipe implements CookingResul
   }
 
   @Override
-  public ItemStack getResultItem(RegistryAccess pRegistryAccess) {
+  public ItemStack getResultItem(net.minecraft.core.HolderLookup.Provider pRegistryAccess) {
     return result.get();
   }
 
   @Override
-  public ItemStack assemble(Container pContainer, RegistryAccess pRegistryAccess) {
+  public ItemStack assemble(net.minecraft.world.item.crafting.SingleRecipeInput pContainer, net.minecraft.core.HolderLookup.Provider pRegistryAccess) {
     return result.copy();
   }
 }
+

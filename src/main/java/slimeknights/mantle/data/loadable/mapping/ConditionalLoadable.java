@@ -2,9 +2,9 @@ package slimeknights.mantle.data.loadable.mapping;
 
 import com.google.gson.JsonObject;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.common.crafting.CraftingHelper;
-import net.minecraftforge.common.crafting.conditions.ICondition;
-import net.minecraftforge.common.crafting.conditions.ICondition.IContext;
+
+import net.neoforged.neoforge.common.conditions.ICondition;
+import net.neoforged.neoforge.common.conditions.ICondition.IContext;
 import slimeknights.mantle.data.loadable.field.ContextKey;
 import slimeknights.mantle.data.loadable.record.RecordLoadable;
 import slimeknights.mantle.data.registry.GenericLoaderRegistry;
@@ -26,7 +26,7 @@ public record ConditionalLoadable<T extends IHaveLoader>(GenericLoaderRegistry<T
     // if missing, assume tags are invalid
     IContext conditionContext = context.getOrDefault(ContextKey.CONDITION_CONTEXT, IContext.TAGS_INVALID);
     // if the condition matches, use the true value
-    if (CraftingHelper.processConditions(json, "conditions", conditionContext)) {
+    if (!json.has("conditions") || net.neoforged.neoforge.common.conditions.ICondition.CODEC.listOf().parse(com.mojang.serialization.JsonOps.INSTANCE, json.get("conditions")).getOrThrow(IllegalStateException::new).stream().allMatch(c -> c.test(conditionContext))) {
       return registry.getIfPresent(json, "if_true");
     }
     // loader can define a default instance for false if they have one. Otherwise false is required.
@@ -40,7 +40,7 @@ public record ConditionalLoadable<T extends IHaveLoader>(GenericLoaderRegistry<T
   @Override
   public void serialize(T object, JsonObject json) {
     ConditionalObject<T> conditional = (ConditionalObject<T>) object;
-    json.add("conditions", CraftingHelper.serialize(conditional.conditions()));
+    json.add("conditions", net.neoforged.neoforge.common.conditions.ICondition.CODEC.listOf().encodeStart(com.mojang.serialization.JsonOps.INSTANCE, java.util.Arrays.asList(conditional.conditions())).getOrThrow(IllegalStateException::new));
     json.add("if_true", registry.serialize(conditional.ifTrue()));
     T ifFalse = conditional.ifFalse();
     if (ifFalse != defaultIfFalse) {
@@ -70,3 +70,5 @@ public record ConditionalLoadable<T extends IHaveLoader>(GenericLoaderRegistry<T
     T ifFalse();
   }
 }
+
+

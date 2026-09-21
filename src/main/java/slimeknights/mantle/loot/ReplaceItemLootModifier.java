@@ -1,19 +1,17 @@
 package slimeknights.mantle.loot;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunctions;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
-import net.minecraftforge.common.loot.IGlobalLootModifier;
-import net.minecraftforge.common.loot.LootModifier;
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.common.loot.IGlobalLootModifier;
+import net.neoforged.neoforge.common.loot.LootModifier;
 import slimeknights.mantle.data.MantleCodecs;
 import slimeknights.mantle.recipe.helper.ItemOutput;
 
@@ -25,19 +23,19 @@ import java.util.function.BiFunction;
 
 /** Loot modifier to replace an item with another */
 public class ReplaceItemLootModifier extends LootModifier {
-  public static final Codec<ReplaceItemLootModifier> CODEC = RecordCodecBuilder.create(inst -> codecStart(inst).and(
-    inst.group(
-      MantleCodecs.INGREDIENT.fieldOf("original").forGetter(m -> m.original),
-      ItemOutput.REQUIRED_STACK_CODEC.fieldOf("replacement").forGetter(m -> m.replacement),
-      MantleCodecs.LOOT_FUNCTIONS.fieldOf("functions").forGetter(m -> m.functions)
-    )).apply(inst, ReplaceItemLootModifier::new));
+  public static final MapCodec<ReplaceItemLootModifier> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
+      IGlobalLootModifier.LOOT_CONDITIONS_CODEC.fieldOf("conditions").forGetter(m -> m.conditions),
+      MantleCodecs.INGREDIENT.fieldOf("original").forGetter((ReplaceItemLootModifier m) -> m.original),
+      ItemOutput.REQUIRED_STACK_CODEC.fieldOf("replacement").forGetter((ReplaceItemLootModifier m) -> m.replacement),
+      MantleCodecs.LOOT_FUNCTIONS.fieldOf("functions").forGetter((ReplaceItemLootModifier m) -> m.functions)
+    ).apply(inst, ReplaceItemLootModifier::new));
 
   /** Ingredient to test for the original item */
-  private final Ingredient original;
+  public final Ingredient original;
   /** Item for the replacement */
-  private final ItemOutput replacement;
+  public final ItemOutput replacement;
   /** Functions to apply to the replacement */
-  private final LootItemFunction[] functions;
+  public final LootItemFunction[] functions;
   /** Functions merged into a single function for ease of use */
   private final BiFunction<ItemStack, LootContext, ItemStack> combinedFunctions;
 
@@ -46,7 +44,7 @@ public class ReplaceItemLootModifier extends LootModifier {
     this.original = original;
     this.replacement = replacement;
     this.functions = functions;
-    this.combinedFunctions = LootItemFunctions.compose(functions);
+    this.combinedFunctions = LootItemFunctions.compose(List.of(functions));
   }
 
   /** Creates a builder to create a loot modifier */
@@ -61,24 +59,34 @@ public class ReplaceItemLootModifier extends LootModifier {
     while (iterator.hasNext()) {
       ItemStack stack = iterator.next();
       if (original.test(stack)) {
-        ItemStack replacement = this.replacement.get();
-        iterator.set(combinedFunctions.apply(ItemHandlerHelper.copyStackWithSize(replacement, replacement.getCount() * stack.getCount()), context));
+        ItemStack replacementStack = this.replacement.get();
+        iterator.set(combinedFunctions.apply(replacementStack.copyWithCount(replacementStack.getCount() * stack.getCount()), context));
       }
     }
     return generatedLoot;
   }
 
   @Override
-  public Codec<? extends IGlobalLootModifier> codec() {
+  public MapCodec<? extends IGlobalLootModifier> codec() {
     return CODEC;
   }
 
   /** Logic to build this modifier for datagen */
-  @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-  public static class Builder extends AbstractLootModifierBuilder<Builder> {
+  public static class Builder {
     private final Ingredient input;
     private final ItemOutput replacement;
     private final List<LootItemFunction> functions = new ArrayList<>();
+    private final List<LootItemCondition> conditions = new ArrayList<>();
+
+    private Builder(Ingredient input, ItemOutput replacement) {
+        this.input = input;
+        this.replacement = replacement;
+    }
+
+    public Builder addCondition(LootItemCondition condition) {
+      conditions.add(condition);
+      return this;
+    }
 
     /**
      * Adds a loot function to the builder
@@ -90,7 +98,8 @@ public class ReplaceItemLootModifier extends LootModifier {
 
     /** Builds the final modifier */
     public ReplaceItemLootModifier build() {
-      return new ReplaceItemLootModifier(getConditions(), input, replacement, functions.toArray(new LootItemFunction[0]));
+      return new ReplaceItemLootModifier(conditions.toArray(new LootItemCondition[0]), input, replacement, functions.toArray(new LootItemFunction[0]));
     }
   }
 }
+

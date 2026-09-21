@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="${loader_range}"
+loaderVersion="[3,)"
 issueTrackerURL="https://github.com/SlimeKnights/Mantle/issues"
 logoFile="Mantle.png"
 license="MIT"
@@ -15,9 +15,9 @@ Shared code for Slime Knights mods and others.
     displayURL="https://minecraft.curseforge.com/projects/mantle"
 
 [[dependencies.mantle]]
-    modId="forge"
+    modId="neoforge"
     mandatory=true
-    versionRange="${forge_range}"
+    versionRange="[21.1,)"
     ordering="NONE"
     side="BOTH"
 
@@ -34,4 +34,5 @@ Shared code for Slime Knights mods and others.
     versionRange="${jei_range}"
     ordering="NONE"
     side="BOTH"
+
 

@@ -3,29 +3,30 @@ package slimeknights.mantle.recipe.data;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.data.recipes.FinishedRecipe;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.common.crafting.conditions.ICondition;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.neoforge.common.conditions.ICondition;
 import slimeknights.mantle.Mantle;
 import slimeknights.mantle.recipe.condition.TagFilledCondition;
 import slimeknights.mantle.registration.object.IdAwareObject;
 
 import java.util.Objects;
 import java.util.function.Consumer;
+import net.minecraft.data.recipes.RecipeOutput;
 
 /**
  * Interface for common resource location and condition methods
  */
 @SuppressWarnings("unused")
 public interface IRecipeHelper {
-  /* Location helpers */
-
+  /** Gets the ID of the item */
+  default ResourceLocation id(net.minecraft.world.level.ItemLike item) {
+    return net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item.asItem());
+  }
   /** Gets the ID of the mod adding recipes */
   String getModId();
 
@@ -34,93 +35,39 @@ public interface IRecipeHelper {
    * @param name  Location path
    * @return  Location for the mod
    */
-  default ResourceLocation location(String name) {
-    return new ResourceLocation(getModId(), name);
+  default ResourceLocation modResource(String name) {
+    return ResourceLocation.fromNamespaceAndPath(getModId(), name);
   }
 
   /**
-   * Gets a resource location string for your mod
-   * @param id  Location path
-   * @return  Location for your mod as a string
+   * Prefixes the resource location path with the given value
+   * @param loc     Name to use
+   * @param prefix  Prefix value
+   * @return  Resource location path
    */
-  default String prefix(String id) {
-    return getModId() + ":" + id;
+  default ResourceLocation wrap(ResourceLocation loc, String prefix, String suffix) {
+    return modResource(prefix + loc.getPath() + suffix);
   }
 
   /**
-   * Gets a registry ID for the given item
-   * @param item  Item to fetch ID
-   * @return  ID for the item put in your namespace
+   * Prefixes the resource location path with the given value
+   * @param location  Entry registry name to use
+   * @param prefix    Prefix value
+   * @return  Resource location path
    */
-  @SuppressWarnings("deprecation")  // won't be for long
-  default ResourceLocation id(ItemLike item) {
-    return id(BuiltInRegistries.ITEM, item.asItem());
-  }
-
-  /**
-   * Gets a registry ID for the given item
-   * @param registry  Registry to fetch IDs
-   * @param value     Registry value
-   * @return  ID for the item put in your namespace
-   */
-  default <T> ResourceLocation id(Registry<T> registry, T value) {
-    return location(Objects.requireNonNull(registry.getKey(value)).getPath());
-  }
-
-
-  /* Location extending with namespace */
-
-  /** Wraps the given path under our ID */
-  default ResourceLocation wrap(ResourceLocation location, String prefix, String suffix) {
-    return location(prefix + location.getPath() + suffix);
-  }
-
-  /** Prefixes the given path under our ID */
   default ResourceLocation prefix(ResourceLocation location, String prefix) {
-    return location(prefix + location.getPath());
+    return modResource(prefix + location.getPath());
   }
 
-  /** Suffixes the given path under our ID */
+  /**
+   * Suffixes the resource location path with the given value
+   * @param location  Entry registry name to use
+   * @param suffix    Suffix value
+   * @return  Resource location path
+   */
   default ResourceLocation suffix(ResourceLocation location, String suffix) {
-    return location(location.getPath() + suffix);
-  }
-
-
-  /* Registry object location helpers */
-
-  /**
-   * Wraps the registry object ID in the given prefix and suffix
-   * @param location  Object to use for location
-   * @param prefix    Path prefix
-   * @param suffix    Path suffix
-   * @return  Location with the given prefix and suffix
-   */
-  default ResourceLocation wrap(RegistryObject<?> location, String prefix, String suffix) {
-    return wrap(location.getId(), prefix, suffix);
-  }
-
-  /**
-   * Prefixes the registry object ID
-   * @param location  Object to use for location
-   * @param prefix    Path prefix
-   * @return  Location with the given prefix
-   */
-  default ResourceLocation prefix(RegistryObject<?> location, String prefix) {
-    return prefix(location.getId(), prefix);
-  }
-
-  /**
-   * Suffixes the registry object ID
-   * @param location  Object to use for location
-   * @param suffix    Path suffix
-   * @return  Location with the given suffix
-   */
-  default ResourceLocation suffix(RegistryObject<?> location, String suffix) {
-    return suffix(location.getId(), suffix);
-  }
-
-
-  /* Other named object location helpers */
+    return modResource(location.getPath() + suffix);
+  }  /* Other named object location helpers */
 
   /**
    * Wraps the registry object ID in the given prefix and suffix
@@ -163,7 +110,7 @@ public interface IRecipeHelper {
    * @return  Tag instance
    */
   default TagKey<Item> getItemTag(String modId, String name) {
-    return TagKey.create(Registries.ITEM, new ResourceLocation(modId, name));
+    return TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(modId, name));
   }
 
   /**
@@ -173,7 +120,7 @@ public interface IRecipeHelper {
    * @return  Tag instance
    */
   default TagKey<Fluid> getFluidTag(String modId, String name) {
-    return TagKey.create(Registries.FLUID, new ResourceLocation(modId, name));
+    return TagKey.create(Registries.FLUID, ResourceLocation.fromNamespaceAndPath(modId, name));
   }
 
   /**
@@ -191,7 +138,7 @@ public interface IRecipeHelper {
    * @param conditions  Extra conditions
    * @return  Wrapped consumer
    */
-  default Consumer<FinishedRecipe> withCondition(Consumer<FinishedRecipe> consumer, ICondition... conditions) {
+  default RecipeOutput withCondition(RecipeOutput consumer, ICondition... conditions) {
     ConsumerWrapperBuilder builder = ConsumerWrapperBuilder.wrap();
     for (ICondition condition : conditions) {
       builder.addCondition(condition);
@@ -199,3 +146,6 @@ public interface IRecipeHelper {
     return builder.build(consumer);
   }
 }
+
+
+

@@ -1,0 +1,11 @@
+
+task printShapedRecipe {
+    doLast {
+        def url = new URL('file:///' + System.getProperty('user.home').replace('\\', '/') + '/.gradle/caches/modules-2/files-2.1/net.minecraft/client/1.21.1/a7a726ea9e1edcb4df4baaa300ed6ad3dfdf771/client-1.21.1.jar')
+        def loader = new URLClassLoader([url] as URL[])
+        def cls = loader.loadClass('net.minecraft.world.item.crafting.ShapedRecipe')
+        cls.declaredConstructors.each { println it }
+        cls.declaredMethods.each { println it }
+    }
+}
+

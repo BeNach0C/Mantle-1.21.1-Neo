@@ -16,7 +16,6 @@ import slimeknights.mantle.util.typed.TypedMap;
  * @see IntLoadable
  */
 @SuppressWarnings("unused")  // API
-@RequiredArgsConstructor
 public class LongLoadable implements Loadable<Long> {
   /** Loadable ranging from long min to long max */
   public static final LongLoadable ANY = range(Long.MIN_VALUE, Long.MAX_VALUE);
@@ -31,6 +30,12 @@ public class LongLoadable implements Loadable<Long> {
   private final long max;
   /** If true, writes using var long. If false, writes using full 8 bytes every time */
   private final boolean var;
+
+  public LongLoadable(long min, long max, boolean var) {
+    this.min = min;
+    this.max = max;
+    this.var = var;
+  }
 
   /** Creates a loadable */
   public static LongLoadable range(long min, long max) {

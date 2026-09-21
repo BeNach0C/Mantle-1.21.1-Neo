@@ -12,9 +12,9 @@ import java.util.List;
 @SuppressWarnings("ClassCanBeRecord") // needed in GSON
 @RequiredArgsConstructor
 public class FluidUnit {
-
   private final String key;
   private final int needed;
+
 
   /**
    * Gets the display text for this fluid entry
