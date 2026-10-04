@@ -1,0 +1,91 @@
+package slimeknights.mantle.item;
+
+import lombok.Getter;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.Capabilities.FluidHandler;
+
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+/** Represents a capability handler for a container with a constant fluid */
+public class ConstantFluidContainerWrapper implements IFluidHandlerItem {
+  /** Contained fluid */
+  private final FluidStack fluid;
+  /** If true, the container is now empty */
+  private boolean empty = false;
+  /** Item stack representing the current state */
+  @Getter
+  @Nonnull
+  protected ItemStack container;
+  /** Empty version of the container */
+  private final ItemStack emptyStack;
+
+  public ConstantFluidContainerWrapper(FluidStack fluid, ItemStack container, ItemStack emptyStack) {
+    this.fluid = fluid;
+    this.container = container;
+    this.emptyStack = emptyStack;
+  }
+
+  public ConstantFluidContainerWrapper(FluidStack fluid, ItemStack container) {
+    this(fluid, container, container.getCraftingRemainingItem());
+  }
+
+  @Nonnull
+  @Override
+  public ItemStack getContainer() {
+    return container;
+  }
+
+  public int getTanks() {
+    return 1;
+  }
+
+  public int getTankCapacity(int tank) {
+    return fluid.getAmount();
+  }
+
+  public boolean isFluidValid(int tank, @Nonnull FluidStack stack) {
+    return stack.isEmpty() || stack.getFluid() == fluid.getFluid();
+  }
+
+  @Nonnull
+  public FluidStack getFluidInTank(int tank) {
+    return empty ? FluidStack.EMPTY : fluid;
+  }
+
+  public int fill(FluidStack resource, FluidAction action) {
+    return 0;
+  }
+
+  @Nonnull
+  public FluidStack drain(FluidStack resource, FluidAction action) {
+    // cannot drain if: already drained, requested the wrong type, or requested too little
+    if (empty || resource.getFluid() != fluid.getFluid() || resource.getAmount() < fluid.getAmount()) {
+      return FluidStack.EMPTY;
+    }
+    if (action == FluidAction.EXECUTE) {
+      container = emptyStack;
+      empty = true;
+    }
+    return fluid.copy();
+  }
+
+  @Nonnull
+  public FluidStack drain(int maxDrain, FluidAction action) {
+    // cannot drain if: already drained, requested the wrong type, or requested too little
+    if (empty || maxDrain < fluid.getAmount()) {
+      return FluidStack.EMPTY;
+    }
+    if (action == FluidAction.EXECUTE) {
+      container = emptyStack;
+      empty = true;
+    }
+    return fluid.copy();
+  }
+}
