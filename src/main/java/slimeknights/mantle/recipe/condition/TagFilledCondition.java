@@ -35,12 +35,29 @@ public class TagFilledCondition<T> extends TagCondition<T> implements LootItemCo
 
   @Override
   public boolean test(IContext context) {
-    return !context.getTag(tag).isEmpty();
+    if (!context.getTag(tag).isEmpty()) {
+      return true;
+    }
+    if ("forge".equals(tag.location().getNamespace())) {
+      TagKey<T> cTag = TagKey.create(tag.registry(), ResourceLocation.fromNamespaceAndPath("c", tag.location().getPath()));
+      return !context.getTag(cTag).isEmpty();
+    }
+    return false;
   }
 
   @Override
   public boolean test(LootContext context) {
     Registry<T> registry = registry(context);
-    return registry != null && registry.getTagOrEmpty(tag).iterator().hasNext();
+    if (registry == null) {
+      return false;
+    }
+    if (registry.getTagOrEmpty(tag).iterator().hasNext()) {
+      return true;
+    }
+    if ("forge".equals(tag.location().getNamespace())) {
+      TagKey<T> cTag = TagKey.create(tag.registry(), ResourceLocation.fromNamespaceAndPath("c", tag.location().getPath()));
+      return registry.getTagOrEmpty(cTag).iterator().hasNext();
+    }
+    return false;
   }
 }

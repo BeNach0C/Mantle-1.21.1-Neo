@@ -55,9 +55,13 @@ public abstract class InventoryBlock extends Block implements EntityBlock {
     return true;
   }
 
-  @SuppressWarnings("deprecation")
-  @Deprecated
-  public InteractionResult use(BlockState state, Level worldIn, BlockPos pos, Player player, InteractionHand hand, BlockHitResult rayTraceResult) {
+  @Override
+  protected net.minecraft.world.ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level worldIn, BlockPos pos, Player player, InteractionHand hand, BlockHitResult rayTraceResult) {
+    return net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+  }
+
+  @Override
+  protected InteractionResult useWithoutItem(BlockState state, Level worldIn, BlockPos pos, Player player, BlockHitResult rayTraceResult) {
     if (!worldIn.isClientSide) {
       return this.openGui(player, worldIn, pos) ? InteractionResult.CONSUME : InteractionResult.PASS;
     }

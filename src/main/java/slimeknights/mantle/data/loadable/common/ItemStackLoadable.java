@@ -42,7 +42,10 @@ public class ItemStackLoadable {
   /** Field for item stack count that allows empty */
   private static final LoadableField<Integer,ItemStack> COUNT = IntLoadable.FROM_ZERO.defaultField("count", 1, true, ItemStack::getCount);
   /** Field for item stack count that allows empty */
-  private static final LoadableField<CompoundTag,ItemStack> NBT = NBTLoadable.ALLOW_STRING.nullableField("nbt", s -> null);
+  private static final LoadableField<CompoundTag,ItemStack> NBT = NBTLoadable.ALLOW_STRING.nullableField("nbt", s -> {
+    var customData = s.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+    return customData != null ? customData.copyTag() : null;
+  });
 
 
   /* Optional */
@@ -76,7 +79,7 @@ public class ItemStackLoadable {
     }
     ItemStack stack = new ItemStack(item, count);
     if (nbt != null) {
-      // stack.setTag(nbt);
+      net.minecraft.world.item.component.CustomData.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA, stack, nbt);
     }
     return stack;
   }
@@ -107,7 +110,11 @@ public class ItemStackLoadable {
       if (this == READ_COUNT) {
         count = COUNT.get(json, context);
       }
-      return makeStack(ITEM.get(json, context), count, NBT.get(json, context));
+      Item item = ITEM.get(json, context);
+      if (item == Items.AIR && json.has("id")) {
+        item = Loadables.ITEM.getIfPresent(json, "id", context);
+      }
+      return makeStack(item, count, NBT.get(json, context));
     }
 
     @Override
@@ -155,7 +162,9 @@ public class ItemStackLoadable {
         return ItemStack.EMPTY;
       }
       ItemStack stack = new ItemStack(item, count);
-      // stack.readShareTag(nbt);
+      if (nbt != null) {
+        net.minecraft.world.item.component.CustomData.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA, stack, nbt);
+      }
       return stack;
     }
 
@@ -165,7 +174,8 @@ public class ItemStackLoadable {
       if (this == READ_COUNT) {
         COUNT.encode(buffer, stack);
       }
-      buffer.writeNbt(null);
+      var customData = stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+      buffer.writeNbt(customData != null ? customData.copyTag() : null);
     }
   }
 }

@@ -18,16 +18,30 @@ public enum DisplayContextLoadable implements slimeknights.mantle.data.loadable.
 
   @Override
   public ItemDisplayContext parseString(String name, String key, TypedMap context) {
-    try {
-      return ItemDisplayContext.valueOf(name.toUpperCase(java.util.Locale.ROOT));
-    } catch (IllegalArgumentException e) {
-      throw new JsonSyntaxException("Invalid ItemDisplayContext: " + name);
+    for (ItemDisplayContext c : ItemDisplayContext.values()) {
+      if (c.getSerializedName().equalsIgnoreCase(name) || c.name().equalsIgnoreCase(name)) {
+        return c;
+      }
     }
+    switch (name) {
+      case "tconstruct:casting_table":
+      case "tconstruct:fluid_cannon":
+      case "tconstruct:thrown":
+        return ItemDisplayContext.FIXED;
+      case "tconstruct:table":
+      case "tconstruct:casting_basin":
+      case "tconstruct:melter":
+        return ItemDisplayContext.NONE;
+    }
+    if (name.contains(":")) {
+      return ItemDisplayContext.NONE;
+    }
+    throw new JsonSyntaxException("Invalid ItemDisplayContext: " + name);
   }
 
   @Override
   public String getString(ItemDisplayContext object) {
-    return object.name().toLowerCase(java.util.Locale.ROOT);
+    return object.getSerializedName();
   }
 
   @Override

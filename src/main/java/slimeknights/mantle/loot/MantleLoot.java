@@ -63,12 +63,14 @@ public class MantleLoot {
     } else if (key == Registries.LOOT_CONDITION_TYPE) {
       BLOCK_TAG_CONDITION = Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, Mantle.getResource("block_tag"), new LootItemConditionType(BlockTagLootCondition.CODEC));
       HAS_CONTEXT_SET = Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, Mantle.getResource("has_context_set"), new LootItemConditionType(HasLootContextSetCondition.CODEC));
-      // TAG_EMPTY = Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, Mantle.getResource("tag_empty"), new LootItemConditionType(TagEmptyCondition.CODEC)); // TODO: fix this
-      // TAG_FILLED = Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, Mantle.getResource("tag_filled"), new LootItemConditionType(TagFilledCondition.CODEC)); // TODO: fix this
-
-
+      TAG_EMPTY = Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, Mantle.getResource("tag_empty"), new LootItemConditionType(TagEmptyCondition.CODEC));
+      TAG_FILLED = Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, Mantle.getResource("tag_filled"), new LootItemConditionType(TagFilledCondition.CODEC));
     } else if (key == Registries.LOOT_POOL_ENTRY_TYPE) {
       TAG_PREFERENCE = Registry.register(BuiltInRegistries.LOOT_POOL_ENTRY_TYPE, Mantle.getResource("tag_preference"), new LootPoolEntryType(TagPreferenceLootEntry.CODEC));
+    } else if (key == NeoForgeRegistries.Keys.CONDITION_CODECS) {
+      event.register(NeoForgeRegistries.Keys.CONDITION_CODECS, Mantle.getResource("tag_empty"), () -> TagEmptyCondition.CODEC);
+      event.register(NeoForgeRegistries.Keys.CONDITION_CODECS, Mantle.getResource("tag_filled"), () -> TagFilledCondition.CODEC);
+      event.register(NeoForgeRegistries.Keys.CONDITION_CODECS, slimeknights.mantle.recipe.condition.TagCombinationCondition.ID, () -> slimeknights.mantle.recipe.condition.TagCombinationCondition.CODEC);
     }
   }
 

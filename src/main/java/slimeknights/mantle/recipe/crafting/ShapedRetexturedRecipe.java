@@ -2,14 +2,9 @@ package slimeknights.mantle.recipe.crafting;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
 import lombok.Getter;
-import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
-import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
@@ -18,22 +13,15 @@ import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.neoforged.neoforge.common.crafting.CraftingHelper;
-import slimeknights.mantle.Mantle;
 import slimeknights.mantle.recipe.MantleRecipes;
 import slimeknights.mantle.recipe.helper.LoggingRecipeSerializer;
-import slimeknights.mantle.util.JsonHelper;
 import slimeknights.mantle.util.RetexturedHelper;
 
-import javax.annotation.Nullable;
-import java.util.Map;
-
 /** Recipe which sets the texture for a {@link slimeknights.mantle.block.RetexturedBlock} based on an ingredient input. */
-// TODO 1.21: rework to be more like the ShapedMaterialsRecipe from Tinkers for more efficient network syncing
 @SuppressWarnings("WeakerAccess")
 public class ShapedRetexturedRecipe extends ShapedRecipe {
   /** Ingredient used to determine the texture on the output */
-  
+  @Getter
   private final Ingredient texture;
   public Ingredient getTexture() { return texture; }
   private final boolean matchAll;
@@ -111,11 +99,58 @@ public class ShapedRetexturedRecipe extends ShapedRecipe {
   }
 
   public static class Serializer implements LoggingRecipeSerializer<ShapedRetexturedRecipe> {
-    public static final com.mojang.serialization.MapCodec<ShapedRetexturedRecipe> CODEC = com.mojang.serialization.codecs.RecordCodecBuilder.mapCodec(inst -> inst.group(
-      net.minecraft.world.item.crafting.RecipeSerializer.SHAPED_RECIPE.codec().forGetter(r -> (ShapedRecipe) r),
-      Ingredient.CODEC_NONEMPTY.fieldOf("texture").forGetter(ShapedRetexturedRecipe::getTexture),
-      com.mojang.serialization.Codec.BOOL.optionalFieldOf("match_all", false).forGetter(r -> r.matchAll)
-    ).apply(inst, ShapedRetexturedRecipe::new));
+    public static final com.mojang.serialization.MapCodec<ShapedRetexturedRecipe> CODEC = new com.mojang.serialization.MapCodec<>() {
+      @Override
+      public <T> java.util.stream.Stream<T> keys(com.mojang.serialization.DynamicOps<T> ops) {
+        return java.util.stream.Stream.empty();
+      }
+
+      @Override
+      public <T> com.mojang.serialization.DataResult<ShapedRetexturedRecipe> decode(com.mojang.serialization.DynamicOps<T> ops, com.mojang.serialization.MapLike<T> input) {
+        try {
+          JsonObject json = ops.convertTo(com.mojang.serialization.JsonOps.INSTANCE, ops.createMap(input.entries())).getAsJsonObject();
+          JsonElement nbtElement = null;
+          if (json.has("result") && json.get("result").isJsonObject()) {
+            JsonObject resultObj = json.getAsJsonObject("result");
+            if (resultObj.has("item") && !resultObj.has("id")) {
+              resultObj.add("id", resultObj.get("item"));
+              resultObj.remove("item");
+            }
+            if (resultObj.has("nbt")) {
+              nbtElement = resultObj.remove("nbt");
+            }
+          }
+          ShapedRecipe orig = net.minecraft.world.item.crafting.RecipeSerializer.SHAPED_RECIPE.codec().codec()
+            .parse(com.mojang.serialization.JsonOps.INSTANCE, json)
+            .getOrThrow(com.google.gson.JsonSyntaxException::new);
+          ItemStack result = orig.getResultItem(null);
+          if (nbtElement != null) {
+            net.minecraft.nbt.CompoundTag tag = slimeknights.mantle.data.loadable.common.NBTLoadable.ALLOW_STRING.convert(nbtElement, "nbt");
+            result = result.copy();
+            result.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA, net.minecraft.world.item.component.CustomData.of(tag));
+          }
+          JsonElement texElement = json.get("texture");
+          if (texElement != null && texElement.isJsonPrimitive() && json.has("key") && json.get("key").isJsonObject()) {
+            JsonObject keyObj = json.getAsJsonObject("key");
+            String k = texElement.getAsString();
+            if (keyObj.has(k)) {
+              texElement = keyObj.get(k);
+            }
+          }
+          Ingredient texture = slimeknights.mantle.data.loadable.common.IngredientLoadable.DISALLOW_EMPTY.convert(texElement, "texture");
+          boolean matchAll = GsonHelper.getAsBoolean(json, "match_all", false);
+          return com.mojang.serialization.DataResult.success(
+            new ShapedRetexturedRecipe(orig.getGroup(), orig.category(), orig.pattern, result, orig.showNotification(), texture, matchAll));
+        } catch (Exception e) {
+          return com.mojang.serialization.DataResult.error(() -> e.getMessage() == null ? e.toString() : e.getMessage());
+        }
+      }
+
+      @Override
+      public <T> com.mojang.serialization.RecordBuilder<T> encode(ShapedRetexturedRecipe input, com.mojang.serialization.DynamicOps<T> ops, com.mojang.serialization.RecordBuilder<T> prefix) {
+        return net.minecraft.world.item.crafting.RecipeSerializer.SHAPED_RECIPE.codec().encode(input, ops, prefix);
+      }
+    };
 
     @Override
     public com.mojang.serialization.MapCodec<ShapedRetexturedRecipe> codec() {
@@ -143,4 +178,3 @@ public class ShapedRetexturedRecipe extends ShapedRecipe {
     }
   }
 }
-

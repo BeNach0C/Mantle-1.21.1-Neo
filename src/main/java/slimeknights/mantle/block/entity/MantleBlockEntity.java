@@ -51,20 +51,30 @@ public class MantleBlockEntity extends BlockEntity {
   }
 
   /**
-   * Write to NBT that is synced to the client in {@link #getUpdateTag()} and in {@link #saveAdditional(CompoundTag)}
+   * Write to NBT that is synced to the client in {@link #getUpdateTag(net.minecraft.core.HolderLookup.Provider)} and in {@link #saveAdditional(CompoundTag, net.minecraft.core.HolderLookup.Provider)}
    * @param nbt  NBT
    */
   protected void saveSynced(CompoundTag nbt) {}
 
-  public CompoundTag getUpdateTag() {
-    CompoundTag nbt = new CompoundTag();
+  protected void saveSynced(CompoundTag nbt, net.minecraft.core.HolderLookup.Provider provider) {
     saveSynced(nbt);
+  }
+
+  @Override
+  public CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider provider) {
+    CompoundTag nbt = new CompoundTag();
+    saveSynced(nbt, provider);
     return nbt;
+  }
+
+  public CompoundTag getUpdateTag() {
+    net.minecraft.core.HolderLookup.Provider provider = level != null ? level.registryAccess() : net.minecraft.core.RegistryAccess.EMPTY;
+    return getUpdateTag(provider);
   }
 
   @Override
   protected void saveAdditional(CompoundTag nbt, net.minecraft.core.HolderLookup.Provider provider) {
     super.saveAdditional(nbt, provider);
-    saveSynced(nbt);
+    saveSynced(nbt, provider);
   }
 }

@@ -54,7 +54,7 @@ public record TagCombinationCondition<T>(List<TagKey<T>> match, @Nullable TagKey
   }
   public static final com.mojang.serialization.MapCodec<TagCombinationCondition<?>> CODEC = com.mojang.serialization.codecs.RecordCodecBuilder.mapCodec(inst -> inst.group(
     ResourceLocation.CODEC.optionalFieldOf("registry", Registries.ITEM.location()).forGetter(c -> c.match().get(0).registry().location()),
-    ResourceLocation.CODEC.listOf().fieldOf("match").forGetter(c -> c.match().stream().map(TagKey::location).toList()),
+    com.mojang.serialization.Codec.withAlternative(ResourceLocation.CODEC.listOf(), ResourceLocation.CODEC.xmap(List::of, list -> list.get(0))).fieldOf("match").forGetter(c -> c.match().stream().map(TagKey::location).toList()),
     ResourceLocation.CODEC.optionalFieldOf("ignore").forGetter(c -> java.util.Optional.ofNullable(c.ignore()).map(TagKey::location))
   ).apply(inst, (registryLoc, matchLocs, ignoreLoc) -> {
     ResourceKey<Registry<Object>> registry = ResourceKey.createRegistryKey(registryLoc);
@@ -69,11 +69,20 @@ public record TagCombinationCondition<T>(List<TagKey<T>> match, @Nullable TagKey
     return CODEC;
   }
 
+  private static <T> Collection<Holder<T>> getTagWithFallback(IContext context, TagKey<T> tag) {
+    Collection<Holder<T>> holders = context.getTag(tag);
+    if (holders.isEmpty() && "forge".equals(tag.location().getNamespace())) {
+      TagKey<T> cTag = TagKey.create(tag.registry(), ResourceLocation.fromNamespaceAndPath("c", tag.location().getPath()));
+      return context.getTag(cTag);
+    }
+    return holders;
+  }
+
   @Override
   public boolean test(IContext context) {
     // if there is just one tag, just needs to be filled
-    List<Collection<Holder<T>>> tags = match.stream().map(context::getTag).toList();
-    Collection<Holder<T>> ignored = ignore == null ? List.of() : context.getTag(ignore);
+    List<Collection<Holder<T>>> tags = match.stream().map(t -> getTagWithFallback(context, t)).toList();
+    Collection<Holder<T>> ignored = ignore == null ? List.of() : getTagWithFallback(context, ignore);
     if (tags.size() == 1 && ignored.isEmpty()) {
       return !tags.get(0).isEmpty();
     }

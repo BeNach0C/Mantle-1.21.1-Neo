@@ -74,6 +74,11 @@ public class ClientEvents {
   /** Called on construct to initiatlize things that need early entry */
   public static void onConstruct() {}
 
+  private static final ResourceLocation CROSSHAIR_ATTACK_INDICATOR_BACKGROUND_SPRITE = ResourceLocation.withDefaultNamespace("hud/crosshair_attack_indicator_background");
+  private static final ResourceLocation CROSSHAIR_ATTACK_INDICATOR_PROGRESS_SPRITE = ResourceLocation.withDefaultNamespace("hud/crosshair_attack_indicator_progress");
+  private static final ResourceLocation HOTBAR_ATTACK_INDICATOR_BACKGROUND_SPRITE = ResourceLocation.withDefaultNamespace("hud/hotbar_attack_indicator_background");
+  private static final ResourceLocation HOTBAR_ATTACK_INDICATOR_PROGRESS_SPRITE = ResourceLocation.withDefaultNamespace("hud/hotbar_attack_indicator_progress");
+
   @SuppressWarnings("ConstantConditions")
   @SubscribeEvent
   static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -167,8 +172,8 @@ public class ClientEvents {
             int y = (scaledHeight / 2) - 14 + (2 * (scaledHeight % 2));
             int x = minecraft.getWindow().getGuiScaledWidth() / 2 - 8;
             int width = (int)(cooldown * 17.0F);
-            graphics.blit(net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/gui/icons.png"), x, y, 36, 94, 16, 4);
-            graphics.blit(net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/gui/icons.png"), x, y, 52, 94, width, 4);
+            graphics.blitSprite(CROSSHAIR_ATTACK_INDICATOR_BACKGROUND_SPRITE, x, y, 16, 4);
+            graphics.blitSprite(CROSSHAIR_ATTACK_INDICATOR_PROGRESS_SPRITE, 16, 4, 0, 0, x, y, width, 4);
             RenderSystem.defaultBlendFunc();
           }
         }
@@ -184,11 +189,10 @@ public class ClientEvents {
           } else {
             x = centerWidth + 91 + 6 + 32;
           }
-//          RenderSystem.setShaderTexture(0, GuiComponent.GUI_ICONS_LOCATION);
           int l1 = (int)(cooldown * 19.0F);
           RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-          graphics.blit(net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/gui/icons.png"), x, y, 0, 94, 18, 18);
-          graphics.blit(net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/gui/icons.png"), x, y + 18 - l1, 18, 112 - l1, 18, l1);
+          graphics.blitSprite(HOTBAR_ATTACK_INDICATOR_BACKGROUND_SPRITE, x, y, 18, 18);
+          graphics.blitSprite(HOTBAR_ATTACK_INDICATOR_PROGRESS_SPRITE, 18, 18, 0, 18 - l1, x, y + 18 - l1, 18, l1);
         }
         break;
     }

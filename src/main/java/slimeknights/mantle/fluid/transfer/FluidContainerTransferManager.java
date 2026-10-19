@@ -95,14 +95,59 @@ public class FluidContainerTransferManager extends SimpleJsonResourceReloadListe
     NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, OnDatapackSyncEvent.class, e -> JsonHelper.syncPackets(e, MantleNetwork.INSTANCE, new FluidContainerTransferPacket(this.getContainerItems())));
   }
 
+  private static JsonElement normalizeConditions(JsonElement element) {
+    if (element == null || element.isJsonNull()) {
+      return element;
+    }
+    if (element.isJsonArray()) {
+      com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
+      for (JsonElement el : element.getAsJsonArray()) {
+        arr.add(normalizeConditions(el));
+      }
+      return arr;
+    }
+    if (element.isJsonObject()) {
+      JsonObject obj = element.getAsJsonObject();
+      JsonObject newObj = new JsonObject();
+      for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+        String k = entry.getKey();
+        JsonElement v = entry.getValue();
+        if ("type".equals(k) && v.isJsonPrimitive() && v.getAsJsonPrimitive().isString()) {
+          String typeStr = v.getAsString();
+          if (typeStr.startsWith("forge:")) {
+            newObj.addProperty(k, "neoforge:" + typeStr.substring("forge:".length()));
+            continue;
+          }
+        }
+        if ("tag".equals(k) && v.isJsonPrimitive() && v.getAsJsonPrimitive().isString()) {
+          String tagStr = v.getAsString();
+          if (tagStr.startsWith("forge:")) {
+            newObj.addProperty(k, "c:" + tagStr.substring("forge:".length()));
+            continue;
+          } else if (tagStr.startsWith("#forge:")) {
+            newObj.addProperty(k, "#c:" + tagStr.substring("#forge:".length()));
+            continue;
+          }
+        }
+        newObj.add(k, normalizeConditions(v));
+      }
+      return newObj;
+    }
+    return element;
+  }
+
   /** Loads transfer from JSON */
   @Nullable
   private IFluidContainerTransfer loadFluidTransfer(ResourceLocation key, JsonObject json) {
     try {
-      if (!json.has("conditions") || net.neoforged.neoforge.common.conditions.ICondition.CODEC.listOf().parse(com.mojang.serialization.JsonOps.INSTANCE, net.minecraft.util.GsonHelper.getAsJsonArray(json, "conditions")).getOrThrow().stream().allMatch(c -> c.test(context))) {
-        return GSON.fromJson(json, IFluidContainerTransfer.class);
+      if (json.has("conditions")) {
+        JsonElement condEl = normalizeConditions(json.get("conditions"));
+        if (!net.neoforged.neoforge.common.conditions.ICondition.CODEC.listOf().parse(com.mojang.serialization.JsonOps.INSTANCE, condEl).getOrThrow().stream().allMatch(c -> c.test(context))) {
+          return null;
+        }
       }
-    } catch (JsonSyntaxException e) {
+      return GSON.fromJson(json, IFluidContainerTransfer.class);
+    } catch (Exception e) {
       log.error("Failed to load fluid container transfer info from {}", key, e);
     }
     return null;

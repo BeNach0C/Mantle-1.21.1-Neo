@@ -65,9 +65,8 @@ public class GaugeBlock extends Block {
     return Component.translatable(CAPACITY_KEY, TranslationHelper.COMMA_FORMAT.format(capacity));
   }
 
-  @SuppressWarnings("deprecation")
-  @Deprecated
-  public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+  @Override
+  protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
     // display adjacent tank contents
     if (!world.isClientSide()) {
       Direction side = state.getValue(FACING);

@@ -25,7 +25,7 @@ import java.util.function.Consumer;
 public class AddEntryLootModifier extends LootModifier {
   public static final MapCodec<AddEntryLootModifier> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
     IGlobalLootModifier.LOOT_CONDITIONS_CODEC.fieldOf("conditions").forGetter(m -> m.conditions),
-    ((Codec<ILootModifierCondition>)(Object)LootItemCondition.DIRECT_CODEC).listOf().fieldOf("post_conditions").forGetter((AddEntryLootModifier m) -> m.modifierConditions),
+    ILootModifierCondition.CODEC.listOf().fieldOf("post_conditions").forGetter((AddEntryLootModifier m) -> m.modifierConditions),
     MantleCodecs.LOOT_ENTRY.fieldOf("entry").forGetter((AddEntryLootModifier m) -> m.entry),
     MantleCodecs.LOOT_FUNCTIONS.fieldOf("functions").forGetter((AddEntryLootModifier m) -> m.functions)).apply(inst, AddEntryLootModifier::new));
 

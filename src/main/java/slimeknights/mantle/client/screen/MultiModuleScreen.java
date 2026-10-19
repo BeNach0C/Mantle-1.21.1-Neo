@@ -141,7 +141,6 @@ public class MultiModuleScreen<CONTAINER extends MultiModuleContainerMenu<?>> ex
 
   @Override
   public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-    this.renderBackground(graphics, mouseX, mouseY, partialTicks);
     int oldX = this.leftPos;
     int oldY = this.topPos;
     int oldW = this.imageWidth;
@@ -196,20 +195,15 @@ public class MultiModuleScreen<CONTAINER extends MultiModuleContainerMenu<?>> ex
     if (module != null) {
       Slot slot = slotIn;
       // unwrap for the call to the module
-      if (slotIn instanceof WrapperSlot) {
-        slot = ((WrapperSlot) slotIn).parent;
+      if (slotIn instanceof WrapperSlot wrapper) {
+        slot = wrapper.parent;
+        wrapper.syncPosition();
       }
 
       if (!module.shouldDrawSlot(slot)) {
         return;
       }
     }
-
-    // update slot positions
-    // if (slotIn instanceof WrapperSlot) {
-    //   slotIn.x = ((WrapperSlot) slotIn).parent.x;
-    //   slotIn.y = ((WrapperSlot) slotIn).parent.y;
-    // }
 
     super.renderSlot(graphics, slotIn);
   }
@@ -221,13 +215,15 @@ public class MultiModuleScreen<CONTAINER extends MultiModuleContainerMenu<?>> ex
     if (module != null) {
       Slot slot = slotIn;
       // unwrap for the call to the module
-      if (slotIn instanceof WrapperSlot) {
-        slot = ((WrapperSlot) slotIn).parent;
+      if (slotIn instanceof WrapperSlot wrapper) {
+        slot = wrapper.parent;
+        wrapper.syncPosition();
       }
 
       if (!module.shouldDrawSlot(slot)) {
         return false;
       }
+      return this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY);
     }
 
     return this.isHovering(slotIn.x, slotIn.y, 16, 16, mouseX, mouseY);

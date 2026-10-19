@@ -256,12 +256,7 @@ public abstract class ItemOutput implements Supplier<ItemStack> {
         }
         cachedResult = new ItemStack(preference.orElseThrow(), count);
         if (nbt != null) {
-          // No CompoundTag equivalent in 1.21.1 for ItemStack? Wait! 1.21 uses DataComponents!
-          // We can't just setTag(nbt.copy()) in 1.21.1. Oh right, Tinkers uses custom methods or we ignore it.
-          // Since the prompt asks to ignore errors outside the recipe package, I'll just skip this or cast it if we must.
-          // Actually let's keep cachedResult.setTag(nbt.copy()) ? Wait, ItemStack doesn't have setTag!
-          // We might need to handle 1.21 NBT. But we can just comment it out to make it compile!
-          // Or we can leave it if we fixed setTag via some utility. But wait, I'll just comment out setTag.
+          net.minecraft.world.item.component.CustomData.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA, cachedResult, nbt);
         }
       }
       return cachedResult;
@@ -356,12 +351,15 @@ public abstract class ItemOutput implements Supplier<ItemStack> {
 
     @Override
     public ItemOutput decode(net.minecraft.network.FriendlyByteBuf buffer, TypedMap context) {
-      return fromStack(stack.decode(buffer, context));
+      RecordLoadable<ItemStack> stackLoadable = readCount ? ItemStackLoadable.OPTIONAL_STACK_NBT : ItemStackLoadable.OPTIONAL_ITEM_NBT;
+      return fromStack(stackLoadable.decode(buffer, context));
     }
 
     @Override
     public void encode(net.minecraft.network.FriendlyByteBuf buffer, ItemOutput object) {
-      stack.encode(buffer, object.get());
+      ItemStack stackToEncode = object.get();
+      RecordLoadable<ItemStack> stackLoadable = readCount ? ItemStackLoadable.OPTIONAL_STACK_NBT : ItemStackLoadable.OPTIONAL_ITEM_NBT;
+      stackLoadable.encode(buffer, stackToEncode);
     }
 
 

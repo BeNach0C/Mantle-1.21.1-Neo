@@ -83,6 +83,31 @@ public interface LivingEntityPredicate extends IJsonPredicate<LivingEntity> {
     });
   }
 
+  /** Compatibility predicate for 1.20 mantle:mob_type */
+  record MobTypeCompatibilityPredicate(net.minecraft.resources.ResourceLocation mobs) implements LivingEntityPredicate {
+    public static final RecordLoadable<MobTypeCompatibilityPredicate> LOADER = RecordLoadable.create(
+      Loadables.RESOURCE_LOCATION.requiredField("mobs", MobTypeCompatibilityPredicate::mobs),
+      MobTypeCompatibilityPredicate::new
+    );
+
+    @Override
+    public boolean matches(LivingEntity entity) {
+      String path = mobs.getPath();
+      return switch (path) {
+        case "undead" -> entity.getType().is(net.minecraft.tags.EntityTypeTags.UNDEAD);
+        case "arthropod" -> entity.getType().is(net.minecraft.tags.EntityTypeTags.ARTHROPOD);
+        case "illager" -> entity.getType().is(net.minecraft.tags.EntityTypeTags.ILLAGER);
+        case "water", "aquatic" -> entity.getType().is(net.minecraft.tags.EntityTypeTags.AQUATIC);
+        default -> entity.getType().is(TagKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE, mobs));
+      };
+    }
+
+    @Override
+    public RecordLoadable<? extends LivingEntityPredicate> getLoader() {
+      return LOADER;
+    }
+  }
+
 
   /* Helper methods */
 

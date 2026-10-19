@@ -1,12 +1,12 @@
 package slimeknights.mantle.recipe.ingredient;
 
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionContents;
@@ -14,10 +14,12 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.neoforge.common.crafting.ICustomIngredient;
 import net.neoforged.neoforge.common.crafting.IngredientType;
 import org.jetbrains.annotations.Nullable;
+import slimeknights.mantle.Mantle;
 
 import java.util.stream.Stream;
 
 public class PotionIngredient implements ICustomIngredient {
+  public static final ResourceLocation ID = Mantle.getResource("potion");
   public static final MapCodec<PotionIngredient> CODEC = RecordCodecBuilder.mapCodec(
       instance -> instance.group(
           Ingredient.CODEC.fieldOf("ingredient").forGetter(i -> i.base),
@@ -30,6 +32,8 @@ public class PotionIngredient implements ICustomIngredient {
       Potion.STREAM_CODEC, i -> i.potion,
       PotionIngredient::new
   );
+
+  public static final IngredientType<PotionIngredient> TYPE = new IngredientType<>(CODEC, STREAM_CODEC);
 
   private final Ingredient base;
   private final Holder<Potion> potion;
@@ -67,8 +71,6 @@ public class PotionIngredient implements ICustomIngredient {
 
   @Override
   public IngredientType<?> getType() {
-    // This assumes there's a registered IngredientType somewhere, probably needs to be fetched from a registry
-    // or we define it here if there is one. Let's see what the compiler says.
-    return null;
+    return TYPE;
   }
 }

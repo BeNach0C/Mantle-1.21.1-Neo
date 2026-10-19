@@ -43,9 +43,15 @@ public record HasLootContextSetCondition(LootContextParamSet set) implements Loo
 
   public static final MapCodec<HasLootContextSetCondition> CODEC = RecordCodecBuilder.mapCodec(inst ->
       inst.group(
-          com.mojang.serialization.Codec.STRING.fieldOf("set_dummy").xmap(
-              key -> net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.EMPTY,
-              set -> "dummy"
+          com.mojang.serialization.Codec.STRING.fieldOf("set").xmap(
+              key -> switch (key) {
+                case "minecraft:entity", "entity" -> net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.ENTITY;
+                case "minecraft:block", "block" -> net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.BLOCK;
+                case "minecraft:chest", "chest" -> net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.CHEST;
+                case "minecraft:fishing", "fishing" -> net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.FISHING;
+                default -> net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.EMPTY;
+              },
+              set -> "minecraft:entity"
           ).forGetter(HasLootContextSetCondition::set)
       ).apply(inst, HasLootContextSetCondition::new)
   );

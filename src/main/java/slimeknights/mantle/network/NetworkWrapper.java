@@ -17,7 +17,9 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import slimeknights.mantle.network.packet.ISimplePacket;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 @SuppressWarnings({"unused", "WeakerAccess"})
@@ -25,6 +27,7 @@ public class NetworkWrapper {
   private final ResourceLocation channelName;
   private final String version;
   private final List<Consumer<PayloadRegistrar>> packetRegistrations = new ArrayList<>();
+  private final Set<CustomPacketPayload.Type<?>> registeredTypes = new HashSet<>();
   private boolean isClient = false;
   private boolean isServer = false;
 
@@ -46,6 +49,9 @@ public class NetworkWrapper {
   }
 
   public <MSG extends ISimplePacket> void registerPacket(CustomPacketPayload.Type<MSG> type, StreamCodec<? super RegistryFriendlyByteBuf, MSG> codec) {
+    if (type == null || codec == null || !registeredTypes.add(type)) {
+      return;
+    }
     boolean client = this.isClient;
     boolean server = this.isServer;
     packetRegistrations.add(registrar -> {

@@ -93,7 +93,7 @@ public class Mantle {
   public static final String modId = "mantle";
   public static final Logger logger = LogManager.getLogger("Mantle");
   /** Namespace for common tags, used for easier migration to the future "c" standard */
-  public static final String COMMON = "forge";
+  public static final String COMMON = "c";
 
   /* Instance of this mod, used for grabbing prototype fields */
   public static Mantle instance;
@@ -111,9 +111,18 @@ public class Mantle {
     // bus.addListener(EventPriority.NORMAL, false, RegisterCapabilitiesEvent.class, this::registerCapabilities);
     bus.addListener(EventPriority.NORMAL, false, GatherDataEvent.class, this::gatherData);
     bus.addListener(EventPriority.NORMAL, false, RegisterEvent.class, this::register);
+    MantleNetwork.registerPackets();
     bus.addListener(net.neoforged.bus.api.EventPriority.NORMAL, false, net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent.class, MantleNetwork.INSTANCE::register);
     MantleRecipes.init(bus);
     NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, PlayerInteractEvent.RightClickBlock.class, LecternBookItem::interactWithBlock);
+    NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, false, net.neoforged.neoforge.event.server.ServerStartedEvent.class, event -> {
+      validateAndCleanRecipes(event.getServer());
+    });
+    NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, false, net.neoforged.neoforge.event.OnDatapackSyncEvent.class, event -> {
+      if (event.getPlayerList() != null && event.getPlayerList().getServer() != null) {
+        validateAndCleanRecipes(event.getPlayerList().getServer());
+      }
+    });
 
     if (FMLEnvironment.dist == Dist.CLIENT) {
       ClientEvents.onConstruct();
@@ -125,7 +134,6 @@ public class Mantle {
   // }
 
   private void commonSetup(final FMLCommonSetupEvent event) {
-    MantleNetwork.registerPackets();
     MantleCommand.init();
     OffhandCooldownTracker.init();
     TagPreference.init();
@@ -134,13 +142,14 @@ public class Mantle {
 
   private void register(RegisterEvent event) {
     ResourceKey<?> key = event.getRegistryKey();
+    if (key == net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.INGREDIENT_TYPES) {
+      event.register(net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.INGREDIENT_TYPES, FluidContainerIngredient.ID, () -> FluidContainerIngredient.TYPE);
+      event.register(net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.INGREDIENT_TYPES, PotionIngredient.ID, () -> PotionIngredient.TYPE);
+      event.register(net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.INGREDIENT_TYPES, PotionDisplayIngredient.ID, () -> PotionDisplayIngredient.TYPE);
+      event.register(net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.INGREDIENT_TYPES, ResourceLocation.fromNamespaceAndPath("forge", "difference"), () -> new net.neoforged.neoforge.common.crafting.IngredientType<>(net.neoforged.neoforge.common.crafting.DifferenceIngredient.CODEC));
+      event.register(net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.INGREDIENT_TYPES, ResourceLocation.fromNamespaceAndPath("forge", "intersection"), () -> new net.neoforged.neoforge.common.crafting.IngredientType<>(net.neoforged.neoforge.common.crafting.IntersectionIngredient.CODEC));
+    }
     if (key == Registries.RECIPE_SERIALIZER) {
-      // CraftingHelper.register(TagEmptyCondition.SERIALIZER);
-      // CraftingHelper.register(TagFilledCondition.SERIALIZER);
-      // CraftingHelper.register(TagCombinationCondition.SERIALIZER);
-      // CraftingHelper.register(FluidContainerIngredient.ID, FluidContainerIngredient.SERIALIZER);
-      // CraftingHelper.register(getResource("potion"), PotionIngredient.SERIALIZER);
-      // CraftingHelper.register(getResource("potion_display"), PotionDisplayIngredient.SERIALIZER);
 
       // fluid container transfer
       FluidContainerTransferManager.TRANSFER_LOADERS.registerDeserializer(EmptyFluidContainerTransfer.ID, EmptyFluidContainerTransfer.DESERIALIZER);
@@ -186,7 +195,7 @@ public class Mantle {
         LivingEntityPredicate.LOADER.register(getResource("feet_in_water"), LivingEntityPredicate.FEET_IN_WATER.getLoader());
         LivingEntityPredicate.LOADER.register(getResource("underwater"), LivingEntityPredicate.UNDERWATER.getLoader());
         LivingEntityPredicate.LOADER.register(getResource("raining_at"), LivingEntityPredicate.RAINING.getLoader());
-        // LivingEntityPredicate.LOADER.register(getResource("mob_type"), MobTypePredicate.LOADER);
+        LivingEntityPredicate.LOADER.register(getResource("mob_type"), LivingEntityPredicate.MobTypeCompatibilityPredicate.LOADER);
         LivingEntityPredicate.LOADER.register(getResource("has_enchantment"), HasEnchantmentEntityPredicate.LOADER);
         // register mob types
         // MobTypePredicate.MOB_TYPES.register(ResourceLocation.fromNamespaceAndPath("undefined"), MobType.UNDEFINED);
@@ -288,6 +297,64 @@ public class Mantle {
    */
   public static MutableComponent makeComponent(String base, String name, Object... args) {
     return Component.translatable(makeDescriptionId(base, name), args);
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  public static void validateAndCleanRecipes(net.minecraft.server.MinecraftServer server) {
+    if (server == null || server.getRecipeManager() == null) return;
+    net.minecraft.world.item.crafting.RecipeManager recipeManager = server.getRecipeManager();
+    java.util.List<net.minecraft.world.item.crafting.RecipeHolder<?>> validRecipes = new java.util.ArrayList<>();
+    boolean foundBroken = false;
+    for (net.minecraft.world.item.crafting.RecipeHolder<?> holder : recipeManager.getRecipes()) {
+      net.minecraft.world.item.crafting.Recipe<?> recipe = holder.value();
+      if (recipe == null) {
+        logger.error("FATAL: Recipe holder '{}' has null recipe value! Skipping.", holder.id());
+        foundBroken = true;
+        continue;
+      }
+      net.minecraft.world.item.crafting.RecipeSerializer<?> serializer = null;
+      try {
+        serializer = recipe.getSerializer();
+      } catch (Throwable t) {
+        logger.error("FATAL: Recipe '{}' threw exception in getSerializer()! Class: {}", holder.id(), recipe.getClass().getName(), t);
+        foundBroken = true;
+        continue;
+      }
+      if (serializer == null) {
+        logger.error("FATAL: Recipe '{}' has null serializer! Class: {}", holder.id(), recipe.getClass().getName());
+        foundBroken = true;
+        continue;
+      }
+      net.minecraft.network.codec.StreamCodec streamCodec = null;
+      try {
+        streamCodec = serializer.streamCodec();
+      } catch (Throwable t) {
+        logger.error("FATAL: Recipe '{}' serializer {} threw in streamCodec()! Class: {}", holder.id(), serializer.getClass().getName(), recipe.getClass().getName(), t);
+        foundBroken = true;
+        continue;
+      }
+      if (streamCodec == null) {
+        logger.error("FATAL: Recipe '{}' serializer {} returned null streamCodec! Class: {}", holder.id(), serializer.getClass().getName(), recipe.getClass().getName());
+        foundBroken = true;
+        continue;
+      }
+      try {
+        net.minecraft.network.RegistryFriendlyByteBuf testBuf = new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(), server.registryAccess());
+        streamCodec.encode(testBuf, recipe);
+        testBuf.release();
+      } catch (Throwable t) {
+        logger.error("FATAL: Recipe '{}' of class {} failed test encode! Serializer: {}. Error: {}", holder.id(), recipe.getClass().getName(), serializer.getClass().getName(), t.getMessage(), t);
+        foundBroken = true;
+        continue;
+      }
+      validRecipes.add(holder);
+    }
+    if (foundBroken) {
+      logger.warn("Mantle filtered out broken recipes before network sync! Valid: {} / Total: {}", validRecipes.size(), recipeManager.getRecipes().size());
+      recipeManager.replaceRecipes(validRecipes);
+    } else {
+      logger.info("Mantle verified all {} recipes successfully for network sync.", validRecipes.size());
+    }
   }
 }
 

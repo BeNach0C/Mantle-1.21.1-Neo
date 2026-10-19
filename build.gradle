@@ -14,6 +14,15 @@ version = "${minecraft_version}-${mod_version}"
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
+sourceSets {
+    main {
+        resources {
+            srcDirs "src/generated/resources", "src/main/resources"
+            exclude '.cache'
+        }
+    }
+}
+
 repositories {
     mavenCentral()
     maven {
@@ -72,6 +81,7 @@ dependencies {
 }
 
 tasks.named('processResources', ProcessResources).configure {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     var replaceProperties = [
         'version': mod_version,
         'minecraft_version': minecraft_version,

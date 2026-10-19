@@ -36,6 +36,11 @@ public class LoadableRecipeSerializer<T extends Recipe<?>> implements LoggingRec
 
   /** Creates a serializer from a RecordLoadable */
   public static <T extends Recipe<?>> RecipeSerializer<T> of(slimeknights.mantle.data.loadable.record.RecordLoadable<T> loadable) {
+    return of(loadable, () -> slimeknights.mantle.util.typed.TypedMapBuilder.builder().put(slimeknights.mantle.data.loadable.field.ContextKey.ID, Mantle.getResource("recipe")).build());
+  }
+
+  /** Creates a serializer from a RecordLoadable with a custom context supplier */
+  public static <T extends Recipe<?>> RecipeSerializer<T> of(slimeknights.mantle.data.loadable.record.RecordLoadable<T> loadable, java.util.function.Supplier<slimeknights.mantle.util.typed.TypedMap> contextSupplier) {
     MapCodec<T> codec = new MapCodec<T>() {
       @Override
       public <T1> java.util.stream.Stream<T1> keys(com.mojang.serialization.DynamicOps<T1> ops) {
@@ -46,7 +51,28 @@ public class LoadableRecipeSerializer<T extends Recipe<?>> implements LoggingRec
       public <T1> com.mojang.serialization.DataResult<T> decode(com.mojang.serialization.DynamicOps<T1> ops, com.mojang.serialization.MapLike<T1> input) {
         try {
           com.google.gson.JsonObject json = ops.convertTo(com.mojang.serialization.JsonOps.INSTANCE, ops.createMap(input.entries())).getAsJsonObject();
-          return com.mojang.serialization.DataResult.success(loadable.deserialize(json));
+          com.google.gson.JsonElement conditionsElement = json.get("neoforge:conditions");
+          if (conditionsElement == null) {
+            conditionsElement = json.get("conditions");
+          }
+          if (conditionsElement != null && conditionsElement.isJsonArray()) {
+            com.mojang.serialization.DataResult<java.util.List<net.neoforged.neoforge.common.conditions.ICondition>> conditionsResult = 
+                net.neoforged.neoforge.common.conditions.ICondition.LIST_CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, conditionsElement);
+            if (conditionsResult.error().isPresent()) {
+              return com.mojang.serialization.DataResult.error(() -> "Failed to parse recipe conditions: " + conditionsResult.error().get().message());
+            }
+            for (net.neoforged.neoforge.common.conditions.ICondition cond : conditionsResult.result().orElse(java.util.List.of())) {
+              if (!cond.test(slimeknights.mantle.util.DataLoadedConditionContext.INSTANCE)) {
+                return com.mojang.serialization.DataResult.error(() -> "Recipe condition failed: " + cond);
+              }
+            }
+          }
+
+          slimeknights.mantle.util.typed.TypedMap context = contextSupplier.get();
+          if (context.get(slimeknights.mantle.data.loadable.field.ContextKey.ID) == null) {
+            context = slimeknights.mantle.util.typed.TypedMapBuilder.builder().putAll(context).put(slimeknights.mantle.data.loadable.field.ContextKey.ID, Mantle.getResource("recipe")).build();
+          }
+          return com.mojang.serialization.DataResult.success(loadable.deserialize(json, context));
         } catch (Exception e) {
           return com.mojang.serialization.DataResult.error(() -> e.getMessage() == null ? e.toString() : e.getMessage());
         }
@@ -71,7 +97,11 @@ public class LoadableRecipeSerializer<T extends Recipe<?>> implements LoggingRec
     StreamCodec<RegistryFriendlyByteBuf, T> streamCodec = new StreamCodec<RegistryFriendlyByteBuf, T>() {
       @Override
       public T decode(RegistryFriendlyByteBuf buffer) {
-        return loadable.decode(buffer);
+        slimeknights.mantle.util.typed.TypedMap context = contextSupplier.get();
+        if (context.get(slimeknights.mantle.data.loadable.field.ContextKey.ID) == null) {
+          context = slimeknights.mantle.util.typed.TypedMapBuilder.builder().putAll(context).put(slimeknights.mantle.data.loadable.field.ContextKey.ID, Mantle.getResource("recipe")).build();
+        }
+        return loadable.decode(buffer, context);
       }
 
       @Override

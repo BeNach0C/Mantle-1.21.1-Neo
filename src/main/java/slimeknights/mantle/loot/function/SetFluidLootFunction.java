@@ -18,9 +18,16 @@ import slimeknights.mantle.loot.MantleLoot;
  * Loot function to set the fluid on a dropped item
  */
 public class SetFluidLootFunction extends LootItemConditionalFunction {
+  private static final com.mojang.serialization.Codec<FluidStack> FLUID_STACK_CODEC = com.mojang.serialization.Codec.withAlternative(
+    FluidStack.CODEC,
+    RecordCodecBuilder.create(inst -> inst.group(
+      net.minecraft.core.registries.BuiltInRegistries.FLUID.byNameCodec().fieldOf("fluid").forGetter(FluidStack::getFluid),
+      com.mojang.serialization.Codec.INT.fieldOf("amount").forGetter(FluidStack::getAmount)
+    ).apply(inst, FluidStack::new))
+  );
   public static final MapCodec<SetFluidLootFunction> CODEC = RecordCodecBuilder.mapCodec(inst ->
       commonFields(inst).and(
-          FluidStack.CODEC.fieldOf("fluid").forGetter(loot -> loot.fluid)
+          FLUID_STACK_CODEC.fieldOf("fluid").forGetter(loot -> loot.fluid)
       ).apply(inst, SetFluidLootFunction::new)
   );
 

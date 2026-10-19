@@ -26,10 +26,40 @@ public interface BaseRegistryLoadable<T> extends ResourceLocationLoadable<T> {
   @Override
   default T fromKey(ResourceLocation name, String key, TypedMap context) {
     Registry<T> registry = registry();
-    if (registry != null && registry.containsKey(name)) {
-      T value = registry.get(name);
-      if (value != null) {
-        return value;
+    if (registry != null) {
+      if (registry.containsKey(name)) {
+        T value = registry.get(name);
+        if (value != null) {
+          return value;
+        }
+      }
+      if (registryId().equals(net.minecraft.core.registries.Registries.ITEM.location())) {
+        if ("minecraft:scute".equals(name.toString())) {
+          ResourceLocation remapped = ResourceLocation.withDefaultNamespace("turtle_scute");
+          if (registry.containsKey(remapped)) {
+            T value = registry.get(remapped);
+            if (value != null) {
+              return value;
+            }
+          }
+        }
+      }
+      if (registryId().equals(net.minecraft.core.registries.Registries.ATTRIBUTE.location())) {
+        ResourceLocation remapped = switch (name.toString()) {
+          case "forge:step_height_addition", "forge:step_height", "minecraft:step_height" -> ResourceLocation.withDefaultNamespace("generic.step_height");
+          case "forge:swim_speed" -> ResourceLocation.fromNamespaceAndPath("neoforge", "swim_speed");
+          case "forge:block_reach", "forge:reach_distance" -> ResourceLocation.withDefaultNamespace("player.block_interaction_range");
+          case "forge:entity_reach", "forge:attack_range" -> ResourceLocation.withDefaultNamespace("player.entity_interaction_range");
+          case "forge:entity_gravity" -> ResourceLocation.withDefaultNamespace("generic.gravity");
+          case "forge:nametag_distance" -> ResourceLocation.fromNamespaceAndPath("neoforge", "nametag_distance");
+          default -> null;
+        };
+        if (remapped != null && registry.containsKey(remapped)) {
+          T value = registry.get(remapped);
+          if (value != null) {
+            return value;
+          }
+        }
       }
     }
     throw new JsonSyntaxException("Unable to parse " + key + " as registry " + registryId() + " does not contain ID " + name);

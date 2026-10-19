@@ -53,11 +53,18 @@ public class TagPreference {
     }
     // streams have a lovely function to get the minimum element based on a comparator
     // if the tag is empty, stream is empty so returns empty
-    return RegistryHelper.getTagValueStream(registry, tag).min(getComparator(registry));
+    Optional<T> result = RegistryHelper.getTagValueStream(registry, tag).min(getComparator(registry));
+    if (result.isEmpty()) {
+      if ("forge".equals(tag.location().getNamespace())) {
+        TagKey<T> cTag = TagKey.create(tag.registry(), net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("c", tag.location().getPath()));
+        result = RegistryHelper.getTagValueStream(registry, cTag).min(getComparator(registry));
+      } else if ("c".equals(tag.location().getNamespace())) {
+        TagKey<T> forgeTag = TagKey.create(tag.registry(), net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("forge", tag.location().getPath()));
+        result = RegistryHelper.getTagValueStream(registry, forgeTag).min(getComparator(registry));
+      }
+    }
+    return result;
   }
-
-  /** Don't create a new lambda instance every time we call {@link #getPreference(TagKey)} */
-  private static final Function<TagKey<?>,Optional<?>> PREFERENCE_LOOKUP = TagPreference::getUncachedPreference;
 
   /**
    * Gets the preferred value from a tag based on mod ID
@@ -66,8 +73,15 @@ public class TagPreference {
    */
   @SuppressWarnings("unchecked")
   public static <T> Optional<T> getPreference(TagKey<T> tag) {
-    // fetch cached value if we have one
-    return (Optional<T>) PREFERENCE_CACHE.computeIfAbsent(tag, PREFERENCE_LOOKUP);
+    Optional<?> cached = PREFERENCE_CACHE.get(tag);
+    if (cached != null && cached.isPresent()) {
+      return (Optional<T>) cached;
+    }
+    Optional<T> preference = getUncachedPreference(tag);
+    if (preference.isPresent()) {
+      PREFERENCE_CACHE.put(tag, preference);
+    }
+    return preference;
   }
 
   /** Logic to compare two registry values */
@@ -78,7 +92,16 @@ public class TagPreference {
       ResourceLocation idA = Objects.requireNonNullElse(registry.getKey(a), DEFAULT_ID);
       ResourceLocation idB = Objects.requireNonNullElse(registry.getKey(b), DEFAULT_ID);
       // first compare preferences
-      List<? extends String> entries = Config.TAG_PREFERENCES.get();
+      List<? extends String> entries;
+      try {
+        if (Config.SERVER_SPEC != null && Config.SERVER_SPEC.isLoaded()) {
+          entries = Config.TAG_PREFERENCES.get();
+        } else {
+          entries = List.of("minecraft", "tconstruct", "tmechworks", "metalborn", "embers", "create", "immersiveengineering", "mekanism", "thermal");
+        }
+      } catch (Exception e) {
+        entries = List.of("minecraft", "tconstruct", "tmechworks", "metalborn", "embers", "create", "immersiveengineering", "mekanism", "thermal");
+      }
       int size = entries.size();
       int indexA = LogicHelper.defaultIf(entries.indexOf(idA.getNamespace()), -1, size);
       int indexB = LogicHelper.defaultIf(entries.indexOf(idB.getNamespace()), -1, size);

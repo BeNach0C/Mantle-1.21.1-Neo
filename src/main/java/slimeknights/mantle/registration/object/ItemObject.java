@@ -32,7 +32,7 @@ public class ItemObject<I extends ItemLike> implements Supplier<I>, ItemLike, Id
    */
   public ItemObject(DefaultedRegistry<I> registry, I entry) {
     this.entry = RegistryHelper.getHolder(registry, entry);
-    this.id = registry.getKey(entry);VTOY
+    this.id = registry.getKey(entry);
   }
 
   /**

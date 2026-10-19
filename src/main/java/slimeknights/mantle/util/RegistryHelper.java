@@ -21,10 +21,26 @@ import java.util.stream.StreamSupport;
 public class RegistryHelper {
   private RegistryHelper() {}
 
+  @Nullable
+  public static net.minecraft.core.RegistryAccess getActiveRegistryAccess() {
+    net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+    if (server != null) {
+      return server.registryAccess();
+    }
+    return slimeknights.mantle.client.SafeClientAccess.getRegistryAccess();
+  }
+
   /** Gets the registry for the given key, dealing with tags */
   @Nullable
   @SuppressWarnings({"unchecked"})
   public static <T> Registry<T> getRegistry(ResourceKey<? extends Registry<T>> key) {
+    net.minecraft.core.RegistryAccess access = getActiveRegistryAccess();
+    if (access != null) {
+      java.util.Optional<Registry<T>> opt = (java.util.Optional<Registry<T>>) (java.util.Optional<?>) access.registry(key);
+      if (opt.isPresent()) {
+        return opt.get();
+      }
+    }
     return (Registry<T>) BuiltInRegistries.REGISTRY.get(key.location());
   }
 

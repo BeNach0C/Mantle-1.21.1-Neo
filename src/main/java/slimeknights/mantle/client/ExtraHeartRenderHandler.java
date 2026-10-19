@@ -26,7 +26,6 @@ import java.util.Random;
 
 public class ExtraHeartRenderHandler {
   private static final ResourceLocation ICON_HEARTS = ResourceLocation.fromNamespaceAndPath(Mantle.modId, "textures/gui/extra_hearts.png");
-  private static final ResourceLocation ICON_VANILLA = net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/gui/icons.png");
   /** Number of heart color variants */
   private static final int HEART_VARIANTS = 12;
   /** Number of heart color variants */
@@ -82,7 +81,7 @@ public class ExtraHeartRenderHandler {
   @SubscribeEvent(priority = EventPriority.LOW)
   public void renderHealthbar(RenderGuiLayerEvent.Pre event) {
     HeartRenderer renderer = Config.HEART_RENDERER.get();
-    if (renderer == HeartRenderer.DISABLE || event.isCanceled() || event.getName() != VanillaGuiLayers.PLAYER_HEALTH) {
+    if (renderer == HeartRenderer.DISABLE || event.isCanceled() || !event.getName().equals(VanillaGuiLayers.PLAYER_HEALTH)) {
       return;
     }
     // ensure its visible
@@ -123,7 +122,7 @@ public class ExtraHeartRenderHandler {
     // setup window size
     Window window = this.mc.getWindow();
     int left = window.getGuiScaledWidth() / 2 - 91;
-    int top = window.getGuiScaledHeight() - 39;
+    int top = window.getGuiScaledHeight() - this.mc.gui.leftHeight;
 
     // grab max health as the max of it or the health we will display
     // cap it to 20, as this just determines heart count
@@ -219,8 +218,12 @@ public class ExtraHeartRenderHandler {
       renderHearts(graphics, left, top - absorptionOffset, absorpOffset, absorb, 10);
     }
 
-    // prepare the GUI for the event
-    RenderSystem.setShaderTexture(0, ICON_VANILLA);
+    // Keep leftHeight in sync with vanilla GUI so subsequent layers (like armor) render above hearts
+    if (compactAbsorption || absorb == 0) {
+      this.mc.gui.leftHeight += absorptionOffset;
+    } else {
+      this.mc.gui.leftHeight += ROW_HEIGHT + absorptionOffset;
+    }
 
     event.setCanceled(true);
     RenderSystem.disableBlend();

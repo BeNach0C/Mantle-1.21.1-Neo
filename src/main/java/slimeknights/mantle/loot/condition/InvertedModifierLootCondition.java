@@ -32,7 +32,7 @@ public class InvertedModifierLootCondition implements ILootModifierCondition {
 
   public static final com.mojang.serialization.MapCodec<InvertedModifierLootCondition> CODEC = com.mojang.serialization.codecs.RecordCodecBuilder.mapCodec(inst ->
       inst.group(
-          ((com.mojang.serialization.Codec<ILootModifierCondition>)(Object)net.minecraft.world.level.storage.loot.predicates.LootItemCondition.DIRECT_CODEC).fieldOf("condition").forGetter(c -> c.condition)
+          ILootModifierCondition.CODEC.fieldOf("condition").forGetter(c -> c.condition)
       ).apply(inst, InvertedModifierLootCondition::new)
   );
 }

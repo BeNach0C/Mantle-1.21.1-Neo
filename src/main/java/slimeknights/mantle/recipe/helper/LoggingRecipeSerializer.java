@@ -41,7 +41,12 @@ public interface LoggingRecipeSerializer<T extends Recipe<?>> extends RecipeSeri
         try {
           streamCodecSafe().encode(buffer, recipe);
         } catch (RuntimeException e) {
-          String error = LoggingRecipeSerializer.this.getClass().getSimpleName() + ": Error writing recipe of class " + recipe.getClass().getSimpleName() + " to packet";
+          String recipeDetails = String.valueOf(recipe);
+          try {
+            java.lang.reflect.Method m = recipe.getClass().getMethod("getId");
+            recipeDetails = m.invoke(recipe) + " (" + recipe.getClass().getName() + ")";
+          } catch (Throwable ignored) {}
+          String error = LoggingRecipeSerializer.this.getClass().getSimpleName() + ": Error writing recipe [" + recipeDetails + "] of class " + recipe.getClass().getSimpleName() + " to packet";
           Mantle.logger.error("{}", error, e);
           throw new EncoderException(error + " - " + e.getMessage(), e);
         }

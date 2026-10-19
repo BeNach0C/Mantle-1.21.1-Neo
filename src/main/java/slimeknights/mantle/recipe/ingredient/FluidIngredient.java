@@ -257,7 +257,14 @@ public abstract class FluidIngredient implements IAmLoadable {
     @SuppressWarnings("deprecation")  // its a perfectly reasonable method to use mojang
     @Override
     public boolean test(Fluid fluid) {
-      return fluid.is(tag);
+      if (fluid.is(tag)) {
+        return true;
+      }
+      if ("forge".equals(tag.location().getNamespace())) {
+        TagKey<Fluid> cTag = TagKey.create(tag.registry(), net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("c", tag.location().getPath()));
+        return fluid.is(cTag);
+      }
+      return false;
     }
 
     @Override
@@ -268,9 +275,16 @@ public abstract class FluidIngredient implements IAmLoadable {
     @SuppressWarnings("deprecation")  // let me get tags Forge
     @Override
     public List<FluidStack> getAllFluids() {
-      return RegistryHelper.getTagValueStream(BuiltInRegistries.FLUID, tag)
+      List<FluidStack> fluids = RegistryHelper.getTagValueStream(BuiltInRegistries.FLUID, tag)
                           .map(fluid -> new FluidStack(fluid, amount))
                           .toList();
+      if (fluids.isEmpty() && "forge".equals(tag.location().getNamespace())) {
+        TagKey<Fluid> cTag = TagKey.create(tag.registry(), net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("c", tag.location().getPath()));
+        fluids = RegistryHelper.getTagValueStream(BuiltInRegistries.FLUID, cTag)
+                          .map(fluid -> new FluidStack(fluid, amount))
+                          .toList();
+      }
+      return fluids;
     }
   }
 
